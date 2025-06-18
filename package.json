@@ -1,0 +1,81 @@
+{
+	"name": "vscode-generic-expand-selection",
+	"displayName": "Generic Expand Selection",
+	"description": "Intelligently expand selection to nearest scoped characters like quotes, brackets, and more.",
+	"publisher": "danztran",
+	"version": "0.0.1",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/danztran/vscode-generic-expand-selection.git"
+	},
+	"engines": {
+		"vscode": "^1.92.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "vscode-generic-expand-selection.expandSelection",
+				"title": "Expand Selection"
+			},
+			{
+				"command": "vscode-generic-expand-selection.shrinkSelection",
+				"title": "Shrink Selection"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "vscode-generic-expand-selection.expandSelection",
+				"key": "ctrl+e",
+				"mac": "cmd+e",
+				"when": "editorTextFocus"
+			},
+			{
+				"command": "vscode-generic-expand-selection.shrinkSelection",
+				"key": "ctrl+shift+e",
+				"mac": "cmd+shift+e",
+				"when": "editorTextFocus && editorHasSelection"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "pnpm run package",
+		"vscode:install": "pnpm vscode:prepublish && pnpm vsce package -o out.vsix --no-dependencies && code --install-extension out.vsix",
+		"compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+		"watch": "npm-run-all -p watch:*",
+		"watch:esbuild": "node esbuild.js --watch",
+		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+		"package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+		"compile-tests": "tsc -p . --outDir out",
+		"watch-tests": "tsc -p . -w --outDir out",
+		"pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+		"check-types": "tsc --noEmit",
+		"lint": "eslint src --ext ts",
+		"test": "vscode-test"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.2.0",
+		"@types/mocha": "^10.0.7",
+		"@types/node": "20.x",
+		"@types/vscode": "^1.92.0",
+		"@typescript-eslint/eslint-plugin": "^7.14.1",
+		"@typescript-eslint/parser": "^7.11.0",
+		"@vscode/test-cli": "^0.0.9",
+		"@vscode/test-electron": "^2.4.0",
+		"@vscode/vsce": "^2.32.0",
+		"esbuild": "^0.21.5",
+		"eslint": "^8.57.0",
+		"glob": "^7.2.3",
+		"mocha": "^9.2.2",
+		"npm-run-all": "^4.1.5",
+		"typescript": "^5.4.5",
+		"v8-compile-cache": "^2.4.0"
+	},
+	"packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac"
+}
