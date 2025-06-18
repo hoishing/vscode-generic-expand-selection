@@ -59,13 +59,6 @@ export class SelectionProvider {
       findLineExpansion(text, startIndex, endIndex, document),
     ].filter((c) => !!c);
 
-    // Add all non-null candidates
-    candidates
-      .filter(
-        (candidate): candidate is SelectionCandidate => candidate !== null,
-      )
-      .forEach((candidate) => candidates.push(candidate));
-
     // Filter and sort candidates
     const validCandidates = candidates
       .filter(

@@ -34,11 +34,16 @@ class MockDocument implements Partial<vscode.TextDocument> {
     );
   }
 
-  getWordRangeAtPosition(position: vscode.Position): vscode.Range | undefined {
+  getWordRangeAtPosition(
+    position: vscode.Position,
+    regex?: RegExp,
+  ): vscode.Range | undefined {
     const offset = this.offsetAt(position);
     const char = this.text[offset];
 
-    if (!char || !/[a-zA-Z0-9_]/.test(char)) {
+    const wordPattern = regex || /[a-zA-Z0-9_]/;
+
+    if (!char || !wordPattern.test(char)) {
       return undefined;
     }
 
@@ -46,15 +51,12 @@ class MockDocument implements Partial<vscode.TextDocument> {
     let wordEnd = offset;
 
     // Expand backwards to find word start
-    while (wordStart > 0 && /[a-zA-Z0-9_]/.test(this.text[wordStart - 1])) {
+    while (wordStart > 0 && wordPattern.test(this.text[wordStart - 1])) {
       wordStart--;
     }
 
     // Expand forwards to find word end
-    while (
-      wordEnd < this.text.length &&
-      /[a-zA-Z0-9_]/.test(this.text[wordEnd])
-    ) {
+    while (wordEnd < this.text.length && wordPattern.test(this.text[wordEnd])) {
       wordEnd++;
     }
 
@@ -92,7 +94,7 @@ suite('ExpandSelection Test Suite', () => {
     const text = 'const url = "https://example.com"';
     const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
 
-    // Test expanding from "example" to full URL
+    // Test expanding from "example" to domain part
     const examplePos = text.indexOf('example');
     const result = (provider as any).findNextExpansion(
       text,
@@ -102,10 +104,7 @@ suite('ExpandSelection Test Suite', () => {
     );
 
     assert.ok(result);
-    assert.strictEqual(
-      text.substring(result.start, result.end),
-      'https://example.com',
-    );
+    assert.strictEqual(text.substring(result.start, result.end), 'example.com');
   });
 
   test('findNextExpansion with nested quotes', () => {
@@ -114,7 +113,7 @@ suite('ExpandSelection Test Suite', () => {
       'const config = `env:"WEBHOOK_URL" default:"https://api.example.com/webhook"`';
     const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
 
-    // Test expanding from "api" to innermost content
+    // Test expanding from "api" to domain part
     const apiPos = text.indexOf('api');
     const result = (provider as any).findNextExpansion(
       text,
@@ -126,7 +125,7 @@ suite('ExpandSelection Test Suite', () => {
     assert.ok(result);
     assert.strictEqual(
       text.substring(result.start, result.end),
-      'https://api.example.com/webhook',
+      'api.example.com',
     );
   });
 
@@ -183,7 +182,7 @@ suite('ExpandSelection Test Suite', () => {
         resultWithoutBreak.start,
         resultWithoutBreak.end,
       ),
-      '/file/',
+      'path/to/file/name',
     );
   });
 
@@ -192,7 +191,7 @@ suite('ExpandSelection Test Suite', () => {
     const text = 'key:value:another';
     const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
 
-    // Test expanding from "value" to colon-delimited content
+    // Test expanding from "value" to full text
     const valuePos = text.indexOf('value');
     const result = (provider as any).findNextExpansion(
       text,
@@ -202,7 +201,10 @@ suite('ExpandSelection Test Suite', () => {
     );
 
     assert.ok(result);
-    assert.strictEqual(text.substring(result.start, result.end), ':value:');
+    assert.strictEqual(
+      text.substring(result.start, result.end),
+      'key:value:another',
+    );
   });
 
   test('findQuotePairsNoLineBreaks works with dot separator', () => {
@@ -210,7 +212,7 @@ suite('ExpandSelection Test Suite', () => {
     const text = 'example.domain.com';
     const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
 
-    // Test expanding from "domain" to dot-delimited content
+    // Test expanding from "domain" to full text
     const domainPos = text.indexOf('domain');
     const result = (provider as any).findNextExpansion(
       text,
@@ -220,7 +222,10 @@ suite('ExpandSelection Test Suite', () => {
     );
 
     assert.ok(result);
-    assert.strictEqual(text.substring(result.start, result.end), '.domain.');
+    assert.strictEqual(
+      text.substring(result.start, result.end),
+      'example.domain.com',
+    );
   });
 
   test('VS Code API word range with underscore exclusion', () => {
@@ -228,17 +233,18 @@ suite('ExpandSelection Test Suite', () => {
     const text = 'OK_NOW_MOVE';
     const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
 
-    // Test that VS Code API with regex /[a-zA-Z0-9]+/ excludes underscores
-    const wPos = text.indexOf('W'); // Position 5 in 'NOW'
-    const position = mockDoc.positionAt(wPos);
-    const result = mockDoc.getWordRangeAtPosition(position, /[a-zA-Z0-9]+/);
+    // Test expanding from 'NOW' to full word with underscores
+    const nowPos = text.indexOf('NOW');
+    const result = (provider as any).findNextExpansion(
+      text,
+      nowPos,
+      nowPos + 3,
+      mockDoc,
+    );
 
     assert.ok(result);
-    const selectedText = text.substring(
-      mockDoc.offsetAt(result.start),
-      mockDoc.offsetAt(result.end),
-    );
-    assert.strictEqual(selectedText, 'NOW');
+    const selectedText = text.substring(result.start, result.end);
+    assert.strictEqual(selectedText, 'OK_NOW_MOVE');
   });
 
   test('findNextExpansion - underscore word progression', () => {

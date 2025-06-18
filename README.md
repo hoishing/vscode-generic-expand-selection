@@ -1,41 +1,25 @@
 # Generic Expand Selection
 
+[![Test](https://github.com/danztran/vscode-generic-expand-selection/actions/workflows/test.yml/badge.svg)](https://github.com/danztran/vscode-generic-expand-selection/actions/workflows/test.yml)
+
 Intelligently expand and retract text selections using smart scope detection. This extension provides progressive text selection that understands code structure and naturally expands to logical boundaries.
 
 ## Features
 
 ### Smart Progressive Expansion
 
-- **Word Expansion**: Starts with intelligent word selection (excludes underscores from word boundaries)
-- **Scope-Aware Selection**: Automatically detects and expands to various code constructs
-- **Trimmed Content**: Always expands to trimmed content first, then includes delimiters
-- **Size-Based Priority**: Chooses the smallest valid expansion for natural progression
+- **Token Expansion**: Expands to word tokens, including identifiers with underscores and dots
+- **Quote Scopes**: Expands to content within quotes (`"`, `'`, `` ` ``) with trimmed content first
+- **Bracket Scopes**: Expands to content within brackets (`[]`, `{}`, `()`, `<>`)
+- **Line Expansion**: Expands to full line content with automatic trimming
+- **Selection History**: Remember previous selections for step-by-step shrinking (up to 100 selections)
 
-### Supported Scopes
+### Expansion Logic
 
-#### Quote Pairs
-
-- Double quotes: `"content"`
-- Single quotes: `'content'`
-- Backticks: `` `content` ``
-
-#### Delimiter Pairs
-
-- Square brackets: `[content]`
-- Curly braces: `{content}`
-- Parentheses: `(content)`
-- Angle brackets: `<content>`
-
-#### Multi-Line Intelligence
-
-- **Multi-line trimmed expansion**: When selection spans multiple lines, first expands to full trimmed content of those lines
-- **Progressive line expansion**: Expands from partial line content to full trimmed line content
-
-### Retract Functionality
-
-- **Step-by-step shrink selection**: Undo expansions in reverse order
-- **Selection history**: Maintains up to 100 previous selections
-- **Smart history management**: Only stores selections when actual expansions occur
+1. **Token-based**: Finds the next logical token or word boundary
+2. **Trimmed Content First**: Always expands to trimmed content before including delimiters
+3. **Smallest Valid**: Chooses the smallest containing scope for natural progression
+4. **Multi-scope Support**: Handles nested quotes, brackets, and mixed delimiter types
 
 ## Usage
 
@@ -46,64 +30,35 @@ Intelligently expand and retract text selections using smart scope detection. Th
 
 ### Expansion Examples
 
-#### Single Line Expansion
+#### Basic Token Expansion
 
 ```javascript
-const message = "Hello 'world' from `template`";
+const API_BASE_URL = 'https://api.example.com';
 ```
 
-With cursor on `world`:
+With cursor on `api` → `api.example.com` → `https://api.example.com` → full string
 
-1. `world` → word selection
-2. `'world'` → single quote scope
-3. `"Hello 'world' from `template`"` → double quote scope
-4. `const message = "Hello 'world' from `template`";` → full line (trimmed)
-
-#### Multi-Line Expansion
+#### Nested Scopes
 
 ```javascript
-function example() {
-  const data = {
-    name: 'test',
-    value: 42,
+const config = { url: 'https://example.com' };
+```
+
+With cursor on `example` → `example.com` → `https://example.com` → `[url]` → `{...}`
+
+#### Multi-line Content
+
+```javascript
+function test() {
+  return {
+    status: 'ok',
   };
 }
 ```
 
-With partial selection across lines 2-4:
-
-1. First expands to full trimmed content of selected lines
-2. Then expands to surrounding braces `{ ... }`
-3. Then expands to function body
-4. Finally expands to entire function
-
-#### Nested Structures
-
-```javascript
-const config = { api: { url: 'https://example.com/api' } };
-```
-
-With cursor on `example.com`:
-
-1. `example` → word
-2. `https://example.com/api` → quote content
-3. `"https://example.com/api"` → with quotes
-4. `url: "https://example.com/api"` → object property
-5. `{ url: "https://example.com/api" }` → inner object
-6. `api: { url: "https://example.com/api" }` → outer property
-7. `{ api: { url: "https://example.com/api" } }` → outer object
-8. Full assignment → complete statement
-
-### Settings
-
-- **`expandSelection.enableSmartExpansion`** (boolean, default: `true`)
-  - Enable smart expansion to nearest scoped characters
-- **`expandSelection.logLevel`** (string, default: `"info"`)
-  - Set logging level: `"debug"`, `"info"`, `"warn"`, `"error"`
+Selection expands progressively through scopes, with automatic content trimming.
 
 ## Commands
-
-The extension contributes the following commands:
 
 - **`vscode-generic-expand-selection.expandSelection`**: Expand Selection
 - **`vscode-generic-expand-selection.shrinkSelection`**: Shrink Selection
