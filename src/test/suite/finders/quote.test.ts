@@ -5,59 +5,77 @@ suite('Quote Finder Tests', () => {
   suite('findNearestQuotePair', () => {
     test('finds double quotes', () => {
       const text = 'const str = "hello world"';
-      const result = findNearestQuotePair(text, 13, 18); // "hello"
+      const start = text.indexOf('hello');
+      const end = start + 'hello'.length;
+      const result = findNearestQuotePair(text, start, end); // "hello"
 
       assert.ok(result);
-      assert.strictEqual(result.start, 12); // Opening quote
-      assert.strictEqual(result.end, 25); // Closing quote + 1
-      assert.strictEqual(result.contentStart, 13); // After opening quote
-      assert.strictEqual(result.contentEnd, 24); // Before closing quote
+      assert.strictEqual(result.start, text.indexOf('"'));
+      assert.strictEqual(result.end, text.lastIndexOf('"') + 1);
       assert.strictEqual(
         text.substring(result.start, result.end),
         '"hello world"',
       );
       assert.strictEqual(
-        text.substring(result.contentStart, result.contentEnd),
+        text.substring(result.start + 1, result.end - 1),
         'hello world',
       );
     });
 
     test('finds single quotes', () => {
       const text = "const str = 'hello world'";
-      const result = findNearestQuotePair(text, 13, 18); // 'hello'
+      const start = text.indexOf('hello');
+      const end = start + 'hello'.length;
+      const result = findNearestQuotePair(text, start, end); // 'hello'
 
       assert.ok(result);
-      assert.strictEqual(result.start, 12);
-      assert.strictEqual(result.end, 25);
+      assert.strictEqual(result.start, text.indexOf("'"));
+      assert.strictEqual(result.end, text.lastIndexOf("'") + 1);
       assert.strictEqual(
         text.substring(result.start, result.end),
         "'hello world'",
+      );
+      assert.strictEqual(
+        text.substring(result.start + 1, result.end - 1),
+        'hello world',
       );
     });
 
     test('finds backticks', () => {
       const text = 'const str = `hello ${name}`';
-      const result = findNearestQuotePair(text, 13, 18); // `hello`
+      const start = text.indexOf('hello');
+      const end = start + 'hello'.length;
+      const result = findNearestQuotePair(text, start, end); // `hello`
 
       assert.ok(result);
-      assert.strictEqual(result.start, 12);
-      assert.strictEqual(result.end, 27);
+      assert.strictEqual(result.start, text.indexOf('`'));
+      assert.strictEqual(result.end, text.lastIndexOf('`') + 1);
       assert.strictEqual(
         text.substring(result.start, result.end),
         '`hello ${name}`',
+      );
+      assert.strictEqual(
+        text.substring(result.start + 1, result.end - 1),
+        'hello ${name}',
       );
     });
 
     test('handles escaped quotes', () => {
       const text = 'const str = "hello \\"world\\""';
-      const result = findNearestQuotePair(text, 13, 18); // "hello"
+      const start = text.indexOf('hello');
+      const end = start + 'hello'.length;
+      const result = findNearestQuotePair(text, start, end); // "hello"
 
       assert.ok(result);
-      assert.strictEqual(result.start, 12);
-      assert.strictEqual(result.end, 29);
+      assert.strictEqual(result.start, text.indexOf('"'));
+      assert.strictEqual(result.end, text.lastIndexOf('"') + 1);
       assert.strictEqual(
         text.substring(result.start, result.end),
         '"hello \\"world\\""',
+      );
+      assert.strictEqual(
+        text.substring(result.start + 1, result.end - 1),
+        'hello \\"world\\"',
       );
     });
 

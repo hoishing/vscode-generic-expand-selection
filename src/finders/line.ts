@@ -50,8 +50,5 @@ export function findLineExpansion(
   return {
     start: trimmedStart,
     end: trimmedEnd,
-    contentStart: trimmedStart,
-    contentEnd: trimmedEnd,
-    size: trimmedEnd - trimmedStart,
   };
 }

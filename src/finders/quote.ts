@@ -27,11 +27,8 @@ export function findNearestQuotePair(
             const candidate: SelectionCandidate = {
               start: i,
               end: j + 1,
-              contentStart: i + 1,
-              contentEnd: j,
-              size: j + 1 - i,
             };
-
+            const size = candidate.end - candidate.start;
             // Check if this candidate contains the current selection
             if (
               isValidExpansion(
@@ -42,12 +39,11 @@ export function findNearestQuotePair(
               )
             ) {
               // Keep track of the smallest containing candidate
-              if (candidate.size < smallestSize) {
-                smallestSize = candidate.size;
+              if (size < smallestSize) {
+                smallestSize = size;
                 nearestCandidate = candidate;
               }
             }
-
             i = j; // Skip to after this quote pair
             break;
           } else {

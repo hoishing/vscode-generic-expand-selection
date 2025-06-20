@@ -30,9 +30,6 @@ export function findNearestScope(
         const candidate: SelectionCandidate = {
           start,
           end: i + 1,
-          contentStart: start + 1,
-          contentEnd: i,
-          size: i + 1 - start,
         };
 
         // Check if this candidate contains the current selection
@@ -40,8 +37,9 @@ export function findNearestScope(
           isValidExpansion(startIndex, endIndex, candidate.start, candidate.end)
         ) {
           // Keep track of the smallest containing candidate
-          if (candidate.size < smallestSize) {
-            smallestSize = candidate.size;
+          const size = candidate.end - candidate.start;
+          if (size < smallestSize) {
+            smallestSize = size;
             nearestCandidate = candidate;
           }
         }

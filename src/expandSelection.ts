@@ -5,7 +5,6 @@ import {
   findLineExpansion,
   findToken,
 } from './finders';
-import { SelectionCandidate } from './types';
 
 export class SelectionProvider {
   private selectionHistory: vscode.Selection[] = [];
@@ -51,7 +50,7 @@ export class SelectionProvider {
     endIndex: number,
     document: vscode.TextDocument,
   ): { start: number; end: number } | null {
-    // Find all possible scope expansions and collect candidates
+    // Get all valid candidates from finders
     const candidates = [
       findToken(text, startIndex, endIndex, document),
       findNearestQuotePair(text, startIndex, endIndex),
@@ -59,44 +58,22 @@ export class SelectionProvider {
       findLineExpansion(text, startIndex, endIndex, document),
     ].filter((c) => !!c);
 
-    // Filter and sort candidates
-    const validCandidates = candidates
-      .filter(
-        (c) =>
-          startIndex >= c.start &&
-          endIndex <= c.end &&
-          !(startIndex === c.start && endIndex === c.end),
-      )
-      .sort((a, b) => a.size - b.size);
-
-    // Find best expansion
-    for (const candidate of validCandidates) {
-      // Get trimmed content range
-      const trimmedRange = this.getTrimmedRange(
-        text,
-        candidate.contentStart,
-        candidate.contentEnd,
-      );
-
-      if (startIndex === trimmedRange.start && endIndex === trimmedRange.end) {
-        return { start: candidate.start, end: candidate.end };
-      }
-
+    // Return the smallest valid expansion
+    let best: { start: number; end: number } | null = null;
+    let smallest = Infinity;
+    for (const candidate of candidates) {
+      const range = this.getTrimmedRange(text, candidate.start, candidate.end);
+      const size = range.end - range.start;
       if (
-        startIndex >= candidate.contentStart &&
-        endIndex <= candidate.contentEnd
+        size > 0 &&
+        (best === null || size < smallest) &&
+        !(startIndex === range.start && endIndex === range.end)
       ) {
-        if (
-          startIndex === candidate.contentStart &&
-          endIndex === candidate.contentEnd
-        ) {
-          continue;
-        }
-        return trimmedRange;
+        best = range;
+        smallest = size;
       }
     }
-
-    return null;
+    return best;
   }
 
   private getTrimmedRange(

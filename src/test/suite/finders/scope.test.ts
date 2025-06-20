@@ -4,27 +4,25 @@ import { findNearestScope } from '../../../finders/scope';
 suite('Scope Finder Tests', () => {
   test('finds square brackets', () => {
     const text = 'array[index]';
-    const result = findNearestScope(text, 6, 11); // "index"
+    const start = text.indexOf('index');
+    const end = start + 'index'.length;
+    const result = findNearestScope(text, start, end); // "index"
 
     assert.ok(result);
-    assert.strictEqual(result.start, 5); // Opening bracket
-    assert.strictEqual(result.end, 12); // Closing bracket + 1
-    assert.strictEqual(result.contentStart, 6); // After opening bracket
-    assert.strictEqual(result.contentEnd, 11); // Before closing bracket
+    assert.strictEqual(result.start, text.indexOf('[')); // Opening bracket
+    assert.strictEqual(result.end, text.indexOf(']') + 1); // Closing bracket + 1
     assert.strictEqual(text.substring(result.start, result.end), '[index]');
-    assert.strictEqual(
-      text.substring(result.contentStart, result.contentEnd),
-      'index',
-    );
   });
 
   test('finds curly braces', () => {
     const text = 'object{key: value}';
-    const result = findNearestScope(text, 7, 10); // "key"
+    const start = text.indexOf('key');
+    const end = start + 'key'.length;
+    const result = findNearestScope(text, start, end); // "key"
 
     assert.ok(result);
-    assert.strictEqual(result.start, 6);
-    assert.strictEqual(result.end, 18);
+    assert.strictEqual(result.start, text.indexOf('{'));
+    assert.strictEqual(result.end, text.indexOf('}') + 1);
     assert.strictEqual(
       text.substring(result.start, result.end),
       '{key: value}',
@@ -33,11 +31,13 @@ suite('Scope Finder Tests', () => {
 
   test('finds parentheses', () => {
     const text = 'function(param1, param2)';
-    const result = findNearestScope(text, 9, 15); // "param1"
+    const start = text.indexOf('param1');
+    const end = start + 'param1'.length;
+    const result = findNearestScope(text, start, end); // "param1"
 
     assert.ok(result);
-    assert.strictEqual(result.start, 8);
-    assert.strictEqual(result.end, 24);
+    assert.strictEqual(result.start, text.indexOf('('));
+    assert.strictEqual(result.end, text.indexOf(')') + 1);
     assert.strictEqual(
       text.substring(result.start, result.end),
       '(param1, param2)',
@@ -46,11 +46,13 @@ suite('Scope Finder Tests', () => {
 
   test('finds angle brackets', () => {
     const text = 'template<typename T>';
-    const result = findNearestScope(text, 9, 17); // "typename"
+    const start = text.indexOf('typename');
+    const end = start + 'typename'.length;
+    const result = findNearestScope(text, start, end); // "typename"
 
     assert.ok(result);
-    assert.strictEqual(result.start, 8);
-    assert.strictEqual(result.end, 20);
+    assert.strictEqual(result.start, text.indexOf('<'));
+    assert.strictEqual(result.end, text.indexOf('>') + 1);
     assert.strictEqual(
       text.substring(result.start, result.end),
       '<typename T>',
