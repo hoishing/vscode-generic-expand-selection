@@ -1,4 +1,5 @@
 import { SelectionCandidate } from '../types';
+import { isValidExpansion } from './util';
 
 /**
  * Finds all quote pairs (", ', `) and returns the nearest containing candidate
@@ -33,9 +34,12 @@ export function findNearestQuotePair(
 
             // Check if this candidate contains the current selection
             if (
-              startIndex >= candidate.start &&
-              endIndex <= candidate.end &&
-              !(startIndex === candidate.start && endIndex === candidate.end)
+              isValidExpansion(
+                startIndex,
+                endIndex,
+                candidate.start,
+                candidate.end,
+              )
             ) {
               // Keep track of the smallest containing candidate
               if (candidate.size < smallestSize) {

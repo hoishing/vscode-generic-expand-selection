@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { SelectionCandidate } from '../types';
+import { isValidExpansion } from './util';
 
 /**
  * Finds word boundaries using different regex patterns for extended token detection
@@ -20,7 +21,11 @@ export function findToken(
 
   // Define different word patterns to try
   const patterns = [
+    /[A-Z]?[a-z]+/, // With single word characters
+    /[a-zA-Z]+/, // With letters only
+    /[a-zA-Z0-9]+/, // With digits
     /[a-zA-Z0-9_]+/, // With underscores
+    /[a-zA-Z0-9_\-]+/, // Extended: includes underscores, dots, hyphens
     /[a-zA-Z0-9_\.\-]+/, // Extended: includes underscores, dots, hyphens
   ];
 
@@ -31,10 +36,7 @@ export function findToken(
       const wordEnd = document.offsetAt(wordRange.end);
 
       // Check if this would be a valid expansion
-      if (
-        (startIndex > wordStart || endIndex < wordEnd) &&
-        !(startIndex === wordStart && endIndex === wordEnd)
-      ) {
+      if (isValidExpansion(startIndex, endIndex, wordStart, wordEnd)) {
         return {
           start: wordStart,
           end: wordEnd,

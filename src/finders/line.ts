@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { SelectionCandidate } from '../types';
+import { isValidExpansion } from './util';
 
 /**
  * Finds line expansion candidate that spans from start of line containing startIndex
@@ -42,7 +43,7 @@ export function findLineExpansion(
   const trimmedEnd = endLineEnd - trailingWhitespace;
 
   // Only return if it would expand the selection (not if selection already matches exactly)
-  if (startIndex === trimmedStart && endIndex === trimmedEnd) {
+  if (!isValidExpansion(startIndex, endIndex, trimmedStart, trimmedEnd)) {
     return null;
   }
 
