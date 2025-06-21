@@ -67,7 +67,6 @@ export class SelectionProvider {
     const line = candidateMap.line;
     const scope = candidateMap.scope;
     const quote = candidateMap.quote;
-    let ignoreLine = false;
     if (line) {
       if (
         (scope && !(line.start >= scope.start && line.end <= scope.end)) ||
@@ -81,38 +80,12 @@ export class SelectionProvider {
       if (!candidate) {
         continue;
       }
-      const range = this.getTrimmedRange(text, candidate.start, candidate.end);
-      const size = range.end - range.start;
-      if (
-        size > 0 &&
-        (best === null || size < smallest) &&
-        !(startIndex === range.start && endIndex === range.end)
-      ) {
-        best = range;
+      const size = candidate.end - candidate.start;
+      if (size > 0 && (best === null || size < smallest)) {
+        best = candidate;
         smallest = size;
       }
     }
     return best;
-  }
-
-  private getTrimmedRange(
-    text: string,
-    start: number,
-    end: number,
-  ): { start: number; end: number } {
-    const content = text.substring(start, end);
-    const trimmedContent = content.trim();
-
-    if (trimmedContent.length === 0) {
-      return { start, end };
-    }
-
-    const leadingWhitespace = content.length - content.trimStart().length;
-    const trailingWhitespace = content.length - content.trimEnd().length;
-
-    return {
-      start: start + leadingWhitespace,
-      end: end - trailingWhitespace,
-    };
   }
 }
