@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { SelectionCandidate } from '../types';
-import { isValidExpansion } from './util';
+import { getCandidate } from './util';
 
 /**
  * Finds word boundaries using different regex patterns for extended token detection
@@ -35,12 +35,15 @@ export function findToken(
       const wordStart = document.offsetAt(wordRange.start);
       const wordEnd = document.offsetAt(wordRange.end);
 
-      // Check if this would be a valid expansion
-      if (isValidExpansion(startIndex, endIndex, wordStart, wordEnd)) {
-        return {
-          start: wordStart,
-          end: wordEnd,
-        };
+      const candidate = getCandidate(
+        startIndex,
+        endIndex,
+        wordStart,
+        wordEnd,
+        text,
+      );
+      if (candidate) {
+        return candidate;
       }
     }
   }

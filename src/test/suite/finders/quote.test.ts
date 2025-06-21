@@ -10,14 +10,9 @@ suite('Quote Finder Tests', () => {
       const result = findNearestQuotePair(text, start, end); // "hello"
 
       assert.ok(result);
-      assert.strictEqual(result.start, text.indexOf('"'));
-      assert.strictEqual(result.end, text.lastIndexOf('"') + 1);
+      // Should prefer content inside quotes
       assert.strictEqual(
         text.substring(result.start, result.end),
-        '"hello world"',
-      );
-      assert.strictEqual(
-        text.substring(result.start + 1, result.end - 1),
         'hello world',
       );
     });
@@ -29,14 +24,8 @@ suite('Quote Finder Tests', () => {
       const result = findNearestQuotePair(text, start, end); // 'hello'
 
       assert.ok(result);
-      assert.strictEqual(result.start, text.indexOf("'"));
-      assert.strictEqual(result.end, text.lastIndexOf("'") + 1);
       assert.strictEqual(
         text.substring(result.start, result.end),
-        "'hello world'",
-      );
-      assert.strictEqual(
-        text.substring(result.start + 1, result.end - 1),
         'hello world',
       );
     });
@@ -48,15 +37,38 @@ suite('Quote Finder Tests', () => {
       const result = findNearestQuotePair(text, start, end); // `hello`
 
       assert.ok(result);
-      assert.strictEqual(result.start, text.indexOf('`'));
-      assert.strictEqual(result.end, text.lastIndexOf('`') + 1);
+      // Should prefer content inside backticks
       assert.strictEqual(
         text.substring(result.start, result.end),
-        '`hello ${name}`',
-      );
-      assert.strictEqual(
-        text.substring(result.start + 1, result.end - 1),
         'hello ${name}',
+      );
+    });
+
+    test('select world should expand to quoted content', () => {
+      const text = 'const str = "hello \\"world\\""';
+      const start = text.indexOf('world');
+      const end = start + 'world'.length;
+      const result = findNearestQuotePair(text, start, end); // "world"
+
+      assert.ok(result);
+      // Should return the complete escaped quote segment
+      assert.strictEqual(
+        text.substring(result.start, result.end),
+        'hello \\"world\\"',
+      );
+    });
+
+    test('select "world" should expand to quoted content 2', () => {
+      const text = 'const str = "hello \\"world\\""';
+      const start = text.indexOf('"world\\"');
+      const end = start + '"world\\"'.length;
+      const result = findNearestQuotePair(text, start, end); // "world"
+
+      assert.ok(result);
+      // Should prefer content inside quotes
+      assert.strictEqual(
+        text.substring(result.start, result.end),
+        'hello \\"world\\"',
       );
     });
 
@@ -67,14 +79,9 @@ suite('Quote Finder Tests', () => {
       const result = findNearestQuotePair(text, start, end); // "hello"
 
       assert.ok(result);
-      assert.strictEqual(result.start, text.indexOf('"'));
-      assert.strictEqual(result.end, text.lastIndexOf('"') + 1);
+      // Should prefer content inside quotes
       assert.strictEqual(
         text.substring(result.start, result.end),
-        '"hello \\"world\\""',
-      );
-      assert.strictEqual(
-        text.substring(result.start + 1, result.end - 1),
         'hello \\"world\\"',
       );
     });
@@ -84,9 +91,10 @@ suite('Quote Finder Tests', () => {
       const result = findNearestQuotePair(text, 14, 19); // "inner"
 
       assert.ok(result);
+      // Should prefer content inside quotes
       assert.strictEqual(
         text.substring(result.start, result.end),
-        '"inner content"',
+        'inner content',
       );
     });
 
@@ -95,10 +103,10 @@ suite('Quote Finder Tests', () => {
       const result = findNearestQuotePair(text, 8, 13); // "inner"
 
       assert.ok(result);
-      // Should find the outer quote since escaped quotes don't create separate pairs
+      // Should prefer content inside quotes
       assert.strictEqual(
         text.substring(result.start, result.end),
-        '"outer \\"inner\\" content"',
+        'outer \\"inner\\" content',
       );
     });
 

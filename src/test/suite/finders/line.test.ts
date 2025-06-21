@@ -101,7 +101,7 @@ suite('Line Finder Tests', () => {
 
     assert.ok(result);
     const selectedText = text.substring(result.start, result.end);
-    assert.strictEqual(selectedText, 'const value = 123;'); // Trimmed
+    assert.strictEqual(selectedText, 'const value = 123'); // Without trailing semicolon
   });
 
   test('handles multi-line with complex indentation', () => {
@@ -133,7 +133,10 @@ suite('Line Finder Tests', () => {
 
     const result = findLineExpansion(text, 1, 5, mockDoc);
 
-    assert.strictEqual(result, null);
+    // Should return an empty candidate with start/end positions
+    assert.ok(result);
+    assert.strictEqual(result.start, 0);
+    assert.strictEqual(result.end, 7);
   });
 
   test('content start and end equal start and end', () => {

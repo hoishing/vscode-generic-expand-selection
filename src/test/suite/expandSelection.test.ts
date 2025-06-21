@@ -306,6 +306,6 @@ suite('ExpandSelection Test Suite', () => {
 
     assert.ok(result);
     const selectedText = text.substring(result.start, result.end);
-    assert.strictEqual(selectedText, '"  hello world  "');
+    assert.strictEqual(selectedText, 'hello world'); // Should prefer content inside quotes
   });
 });

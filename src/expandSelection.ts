@@ -50,18 +50,37 @@ export class SelectionProvider {
     endIndex: number,
     document: vscode.TextDocument,
   ): { start: number; end: number } | null {
-    // Get all valid candidates from finders
-    const candidates = [
-      findToken(text, startIndex, endIndex, document),
-      findNearestQuotePair(text, startIndex, endIndex),
-      findNearestScope(text, startIndex, endIndex),
-      findLineExpansion(text, startIndex, endIndex, document),
-    ].filter((c) => !!c);
+    // Get all valid candidates from finders as a map
+    const candidateMap: Record<string, { start: number; end: number } | null> =
+      {
+        token: findToken(text, startIndex, endIndex, document),
+        quote: findNearestQuotePair(text, startIndex, endIndex),
+        scope: findNearestScope(text, startIndex, endIndex),
+        line: findLineExpansion(text, startIndex, endIndex, document),
+      };
 
-    // Return the smallest valid expansion
+    // Return the smallest valid expansion, with priority logic
     let best: { start: number; end: number } | null = null;
     let smallest = Infinity;
-    for (const candidate of candidates) {
+
+    // Priority: if scope or quote candidate exists and line candidate is not fully contained, ignore line candidate
+    const line = candidateMap.line;
+    const scope = candidateMap.scope;
+    const quote = candidateMap.quote;
+    let ignoreLine = false;
+    if (line) {
+      if (
+        (scope && !(line.start >= scope.start && line.end <= scope.end)) ||
+        (quote && !(line.start >= quote.start && line.end <= quote.end))
+      ) {
+        candidateMap.line = null;
+      }
+    }
+
+    for (const [_, candidate] of Object.entries(candidateMap)) {
+      if (!candidate) {
+        continue;
+      }
       const range = this.getTrimmedRange(text, candidate.start, candidate.end);
       const size = range.end - range.start;
       if (

@@ -1,5 +1,21 @@
 import { SelectionCandidate } from '../types';
-import { isValidExpansion } from './util';
+import { getCandidate } from './util';
+
+function getScopeCandidate(
+  start: number,
+  end: number,
+  startIndex: number,
+  endIndex: number,
+  text: string,
+): SelectionCandidate | null {
+  // Try content inside scope
+  const inner = getCandidate(startIndex, endIndex, start + 1, end, text);
+  if (inner) {
+    return inner;
+  }
+  // Try scope including delimiters
+  return getCandidate(startIndex, endIndex, start, end + 1, text);
+}
 
 /**
  * Finds all balanced scopes ([], {}, (), <>) and returns the nearest containing candidate
@@ -13,7 +29,6 @@ export function findNearestScope(
     { open: '[', close: ']' },
     { open: '{', close: '}' },
     { open: '(', close: ')' },
-    { open: '<', close: '>' },
   ];
 
   let nearestCandidate: SelectionCandidate | null = null;
@@ -27,16 +42,14 @@ export function findNearestScope(
         stack.push(i);
       } else if (text[i] === close && stack.length > 0) {
         const start = stack.pop()!;
-        const candidate: SelectionCandidate = {
+        const candidate = getScopeCandidate(
           start,
-          end: i + 1,
-        };
-
-        // Check if this candidate contains the current selection
-        if (
-          isValidExpansion(startIndex, endIndex, candidate.start, candidate.end)
-        ) {
-          // Keep track of the smallest containing candidate
+          i,
+          startIndex,
+          endIndex,
+          text,
+        );
+        if (candidate) {
           const size = candidate.end - candidate.start;
           if (size < smallestSize) {
             smallestSize = size;

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { SelectionCandidate } from '../types';
-import { isValidExpansion } from './util';
+import { getCandidate } from './util';
 
 /**
  * Finds line expansion candidate that spans from start of line containing startIndex
@@ -25,30 +25,39 @@ export function findLineExpansion(
     new vscode.Position(endPos.line, document.lineAt(endPos.line).text.length),
   );
 
-  // Extract the content from start of first line to end of last line
-  const fullContent = text.substring(startLineStart, endLineEnd);
-
-  // Trim the content to remove leading and trailing whitespace
-  const trimmedContent = fullContent.trim();
-
-  if (trimmedContent.length === 0) {
+  // Get the full candidate first
+  const fullCandidate = getCandidate(
+    startIndex,
+    endIndex,
+    startLineStart,
+    endLineEnd,
+    text,
+  );
+  if (!fullCandidate) {
     return null;
   }
 
-  // Calculate the actual start and end positions of the trimmed content
-  const leadingWhitespace = fullContent.length - fullContent.trimStart().length;
-  const trailingWhitespace = fullContent.length - fullContent.trimEnd().length;
+  // Check for trailing semicolon or comma in the trimmed candidate
+  const lastChar = text[fullCandidate.end - 1];
+  const startLine = document.positionAt(fullCandidate.start).line;
+  const endLine = document.positionAt(fullCandidate.end).line;
 
-  const trimmedStart = startLineStart + leadingWhitespace;
-  const trimmedEnd = endLineEnd - trailingWhitespace;
-
-  // Only return if it would expand the selection (not if selection already matches exactly)
-  if (!isValidExpansion(startIndex, endIndex, trimmedStart, trimmedEnd)) {
-    return null;
+  if (
+    (lastChar === ';' || lastChar === ',') &&
+    fullCandidate.end > endIndex &&
+    startLine === endLine
+  ) {
+    const candidate = getCandidate(
+      startIndex,
+      endIndex,
+      fullCandidate.start,
+      fullCandidate.end - 1,
+      text,
+    );
+    if (candidate) {
+      return candidate;
+    }
   }
 
-  return {
-    start: trimmedStart,
-    end: trimmedEnd,
-  };
+  return fullCandidate;
 }

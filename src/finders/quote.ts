@@ -1,5 +1,5 @@
 import { SelectionCandidate } from '../types';
-import { isValidExpansion } from './util';
+import { getCandidate } from './util';
 
 /**
  * Finds all quote pairs (", ', `) and returns the nearest containing candidate
@@ -24,26 +24,27 @@ export function findNearestQuotePair(
           if (text[j] === '\\' && !escaped) {
             escaped = true;
           } else if (text[j] === quote && !escaped) {
-            const candidate: SelectionCandidate = {
-              start: i,
-              end: j + 1,
-            };
-            const size = candidate.end - candidate.start;
-            // Check if this candidate contains the current selection
-            if (
-              isValidExpansion(
-                startIndex,
-                endIndex,
-                candidate.start,
-                candidate.end,
-              )
-            ) {
-              // Keep track of the smallest containing candidate
+            // Try content inside quotes first
+            const innerCandidate = getCandidate(
+              startIndex,
+              endIndex,
+              i + 1,
+              j,
+              text,
+            );
+            let candidate = innerCandidate;
+            if (!candidate) {
+              // Fallback to full quote including delimiters
+              candidate = getCandidate(startIndex, endIndex, i, j + 1, text);
+            }
+            if (candidate) {
+              const size = candidate.end - candidate.start;
               if (size < smallestSize) {
                 smallestSize = size;
                 nearestCandidate = candidate;
               }
             }
+
             i = j; // Skip to after this quote pair
             break;
           } else {

@@ -9,8 +9,9 @@ suite('Scope Finder Tests', () => {
     const result = findNearestScope(text, start, end); // "index"
 
     assert.ok(result);
-    assert.strictEqual(result.start, text.indexOf('[')); // Opening bracket
-    assert.strictEqual(result.end, text.indexOf(']') + 1); // Closing bracket + 1
+    // Should return full scope when inner content is not valid expansion
+    assert.strictEqual(result.start, text.indexOf('['));
+    assert.strictEqual(result.end, text.indexOf(']') + 1);
     assert.strictEqual(text.substring(result.start, result.end), '[index]');
   });
 
@@ -21,12 +22,9 @@ suite('Scope Finder Tests', () => {
     const result = findNearestScope(text, start, end); // "key"
 
     assert.ok(result);
-    assert.strictEqual(result.start, text.indexOf('{'));
-    assert.strictEqual(result.end, text.indexOf('}') + 1);
-    assert.strictEqual(
-      text.substring(result.start, result.end),
-      '{key: value}',
-    );
+    assert.strictEqual(result.start, text.indexOf('k'));
+    assert.strictEqual(result.end, text.indexOf('}'));
+    assert.strictEqual(text.substring(result.start, result.end), 'key: value');
   });
 
   test('finds parentheses', () => {
@@ -36,26 +34,11 @@ suite('Scope Finder Tests', () => {
     const result = findNearestScope(text, start, end); // "param1"
 
     assert.ok(result);
-    assert.strictEqual(result.start, text.indexOf('('));
-    assert.strictEqual(result.end, text.indexOf(')') + 1);
+    assert.strictEqual(result.start, text.indexOf('p'));
+    assert.strictEqual(result.end, text.indexOf(')'));
     assert.strictEqual(
       text.substring(result.start, result.end),
-      '(param1, param2)',
-    );
-  });
-
-  test('finds angle brackets', () => {
-    const text = 'template<typename T>';
-    const start = text.indexOf('typename');
-    const end = start + 'typename'.length;
-    const result = findNearestScope(text, start, end); // "typename"
-
-    assert.ok(result);
-    assert.strictEqual(result.start, text.indexOf('<'));
-    assert.strictEqual(result.end, text.indexOf('>') + 1);
-    assert.strictEqual(
-      text.substring(result.start, result.end),
-      '<typename T>',
+      'param1, param2',
     );
   });
 
@@ -64,11 +47,8 @@ suite('Scope Finder Tests', () => {
     const result = findNearestScope(text, 10, 13); // "key"
 
     assert.ok(result);
-    // Should find the innermost scope (curly braces)
-    assert.strictEqual(
-      text.substring(result.start, result.end),
-      '{key: value}',
-    );
+    // Should find the innermost scope content (inside curly braces)
+    assert.strictEqual(text.substring(result.start, result.end), 'key: value');
   });
 
   test('finds nested scopes - expands to outer', () => {
@@ -148,10 +128,10 @@ suite('Scope Finder Tests', () => {
     const result = findNearestScope(text, 34, 41); // "item.id"
 
     assert.ok(result);
-    // Should find the innermost containing scope
+    // Should find the innermost containing scope content
     assert.strictEqual(
       text.substring(result.start, result.end),
-      '{id: item.id, name: item.name}',
+      'id: item.id, name: item.name',
     );
   });
 
