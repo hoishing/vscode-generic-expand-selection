@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # Only run if this is a merge commit (PR merge) and contains version bump
-    if: contains(github.event.head_commit.message, 'chore: bump version to v')
+    if: contains(github.event.head_commit.message, 'release: bump version to v')
 
     steps:
     - name: Checkout code
@@ -23,7 +23,7 @@ jobs:
       uses: actions-ecosystem/action-regex-match@v2
       with:
         text: ${{ github.event.head_commit.message }}
-        regex: 'chore: bump version to v([\d.]+)'
+        regex: 'release: bump version to v([\d.]+)'
         flags: gm
 
     - name: Setup Node.js
@@ -58,6 +58,15 @@ jobs:
     - name: Build extension
       run: pnpm run build
 
+    - name: Generate changelog
+      id: changelog
+      run: |
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)
+        echo "Previous tag: $PREV_TAG"
+        echo 'changelog<<EOF' >> $GITHUB_OUTPUT
+        git log --pretty=format:'- %s (%an)' $PREV_TAG..HEAD >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
+
     - name: Create Tag
       uses: mathieudutour/github-tag-action@v6.1
       with:
@@ -75,6 +84,9 @@ jobs:
           ## Release v${{ steps.extract-version.outputs.group1 }}
 
           Automated release created from version bump commit.
+
+          **Recent changes:**
+          ${{ steps.changelog.outputs.changelog }}
 
           **Installation:**
           - Download the `.vsix` file from the assets below
