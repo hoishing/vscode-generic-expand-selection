@@ -25,8 +25,8 @@ export function findToken(
     /[a-zA-Z]+/, // With letters only
     /[a-zA-Z0-9]+/, // With digits
     /[a-zA-Z0-9_]+/, // With underscores
-    /[a-zA-Z0-9_\-]+/, // With hyphens
-    /[a-zA-Z0-9_\-\.]+/, // With dots
+    /[a-zA-Z0-9_-]+/, // With hyphens
+    /[a-zA-Z0-9_\-.]+/, // With dots
   ];
 
   for (const pattern of patterns) {

@@ -158,14 +158,19 @@ suite('ExpandSelection Test Suite', () => {
       textWithoutLineBreak,
     ) as unknown as vscode.TextDocument;
 
-    // Test that content with line breaks is excluded
+    // Test that content with line breaks finds line expansion
     const resultWithBreak = (provider as any).findNextExpansion(
       textWithLineBreak,
       5,
       7,
       mockDocBreak,
     );
-    // Should not find expansion across line break
+    // Should find line expansion
+    assert.ok(resultWithBreak);
+    assert.strictEqual(
+      textWithLineBreak.substring(resultWithBreak.start, resultWithBreak.end),
+      'path/to/',
+    );
 
     // Test that content without line breaks works
     const filePos = textWithoutLineBreak.indexOf('file');

@@ -58,7 +58,7 @@ class MockDocument implements Partial<vscode.TextDocument> {
     }
 
     // Use provided regex or default patterns
-    const patterns = regex ? [regex] : [/[a-zA-Z0-9_]+/, /[a-zA-Z0-9_\.\-]+/];
+    const patterns = regex ? [regex] : [/[a-zA-Z0-9_]+/, /[a-zA-Z0-9_.-]+/];
 
     for (const pattern of patterns) {
       if (pattern.test(char)) {
@@ -155,7 +155,6 @@ suite('ExpandSelection Advanced Tests', () => {
 
       // Expand once
       provider.expandSelection(mockEditor);
-      const expandedSelection = mockEditor.selection;
 
       // Shrink should restore previous selection
       provider.shrinkSelection(mockEditor);
@@ -206,7 +205,6 @@ suite('ExpandSelection Advanced Tests', () => {
       const step2 = mockEditor.selection;
 
       provider.expandSelection(mockEditor);
-      const step3 = mockEditor.selection;
 
       // Shrink back step by step
       provider.shrinkSelection(mockEditor);
@@ -247,7 +245,6 @@ suite('ExpandSelection Advanced Tests', () => {
 
       // Should only be able to shrink a limited number of times
       let shrinkCount = 0;
-      const initialSelection = mockEditor.selection;
 
       while (shrinkCount < 150) {
         const beforeShrink = mockEditor.selection;

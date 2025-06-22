@@ -1,6 +1,6 @@
 # Generic Expand Selection
 
-[![Test](https://github.com/danztran/vscode-generic-expand-selection/actions/workflows/test.yml/badge.svg)](https://github.com/danztran/vscode-generic-expand-selection/actions/workflows/test.yml)
+[![Test](https://github.com/dandehoon/vscode-generic-expand-selection/actions/workflows/test.yml/badge.svg)](https://github.com/dandehoon/vscode-generic-expand-selection/actions/workflows/test.yml)
 
 Intelligently expand and retract text selections using smart scope detection. This extension provides progressive text selection that understands code structure and naturally expands to logical boundaries.
 
@@ -88,7 +88,3 @@ pnpm run vscode:install
 ## License
 
 MIT License
-
-## Repository
-
-[GitHub Repository](https://github.com/danztran/vscode-generic-expand-selection)
