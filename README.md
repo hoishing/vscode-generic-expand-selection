@@ -2,24 +2,17 @@
 
 [![Test](https://github.com/dandehoon/vscode-generic-expand-selection/actions/workflows/test.yml/badge.svg)](https://github.com/dandehoon/vscode-generic-expand-selection/actions/workflows/test.yml)
 
-Intelligently expand and retract text selections using smart scope detection. This extension provides progressive text selection that understands code structure and naturally expands to logical boundaries.
+Smartly expand or shrink your code selection, recover from misclicks or accidental cursor moves.
 
 ## Features
 
-### Smart Progressive Expansion
+### Expansion Rules
 
 - **Token Expansion**: Expands to word tokens, including identifiers with underscores and dots
-- **Quote Scopes**: Expands to content within quotes (`"`, `'`, `` ` ``) with trimmed content first
-- **Bracket Scopes**: Expands to content within brackets (`[]`, `{}`, `()`, `<>`)
-- **Line Expansion**: Expands to full line content with automatic trimming
-- **Selection History**: Remember previous selections for step-by-step shrinking (up to 100 selections)
-
-### Expansion Logic
-
-1. **Token-based**: Finds the next logical token or word boundary
-2. **Trimmed Content First**: Always expands to trimmed content before including delimiters
-3. **Smallest Valid**: Chooses the smallest containing scope for natural progression
-4. **Multi-scope Support**: Handles nested quotes, brackets, and mixed delimiter types
+- **Quote Scopes**: Expands to content within quotes (`"`, `'`, `` ` ``)
+- **Bracket Scopes**: Expands to content within brackets (`[]`, `{}`, `()`)
+- **Line Expansion**: Expands to full line content
+- **Selection History**: Remember previous selections for step-by-step shrinking
 
 ## Usage
 
@@ -46,18 +39,6 @@ const config = { url: 'https://example.com' };
 
 With cursor on `example` → `example.com` → `https://example.com` → `[url]` → `{...}`
 
-#### Multi-line Content
-
-```javascript
-function test() {
-  return {
-    status: 'ok',
-  };
-}
-```
-
-Selection expands progressively through scopes, with automatic content trimming.
-
 ## Commands
 
 - **`vscode-generic-expand-selection.expandSelection`**: Expand Selection
@@ -69,20 +50,17 @@ Selection expands progressively through scopes, with automatic content trimming.
 # Install dependencies
 pnpm install
 
-# Development with watch mode
-pnpm run watch
+# Type check and lint (TypeScript and ESLint)
+pnpm run check
 
-# Compile once
-pnpm run compile
+# Run tests (builds TypeScript, runs esbuild, then executes tests)
+pnpm run test
 
-# Run tests
-pnpm test
+# Build, type check, lint, and package extension as out.vsix
+pnpm run build
 
-# Package extension
-pnpm run package
-
-# Install locally
-pnpm run vscode:install
+# Build and install the packaged extension locally (outputs out.vsix and installs it)
+pnpm run vsce:install
 ```
 
 ## License
