@@ -51,20 +51,13 @@ export default [
     },
   },
   {
-    files: ['*.js'],
-    languageOptions: {
-      ecmaVersion: 2020,
-      sourceType: 'module',
-      globals: {
-        console: 'readonly',
-        process: 'readonly',
-      },
-    },
-    rules: {
-      semi: 'error',
-    },
-  },
-  {
-    ignores: ['out/**', 'dist/**', '**/*.d.ts', 'node_modules/**'],
+    ignores: [
+      'out/**',
+      'dist/**',
+      '**/*.d.ts',
+      'node_modules/**',
+      '*.js',
+      '*.mjs',
+    ],
   },
 ];

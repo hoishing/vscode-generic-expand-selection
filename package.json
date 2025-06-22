@@ -8,7 +8,6 @@
 		"type": "git",
 		"url": "git://github.com/dandehoon/vscode-generic-expand-selection.git"
 	},
-	"type": "module",
 	"engines": {
 		"vscode": "^1.92.0"
 	},
@@ -47,7 +46,7 @@
 	},
 	"scripts": {
 		"check": "tsc --noEmit && eslint src --ext ts",
-		"test": "tsc -p . --outDir out && vscode-test",
+		"test": "tsc -p . --outDir out && node esbuild.js && vscode-test",
 		"build": "pnpm run check && node esbuild.js --production && pnpm dlx vsce package --no-dependencies -o out.vsix",
 		"publish": "pnpm dlx vsce publish --no-dependencies",
 		"vsce:install": "pnpm run build && code --install-extension out.vsix"
