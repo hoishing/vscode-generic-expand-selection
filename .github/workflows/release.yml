@@ -12,7 +12,9 @@ jobs:
       contents: write
 
     # Only run if this is a merge commit (PR merge) and contains version bump
-    if: "contains(github.event.head_commit.message, 'release: bump version to v')"
+    if: |
+      contains(github.event.head_commit.message, 'Merge pull request #') &&
+      contains(github.event.head_commit.message, 'from dandehoon/release/v')
 
     steps:
     - name: Checkout code
@@ -20,13 +22,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Extract version from commit message
+    - name: Extract version from package.json
       id: extract-version
-      uses: actions-ecosystem/action-regex-match@v2
-      with:
-        text: ${{ github.event.head_commit.message }}
-        regex: 'release: bump version to v([\d.]+)'
-        flags: gm
+      run: |
+        echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -63,27 +62,27 @@ jobs:
     - name: Generate changelog
       id: changelog
       run: |
-        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)
-        echo "Previous tag: $PREV_TAG"
-        echo 'changelog<<EOF' >> $GITHUB_OUTPUT
-        git log --pretty=format:'- %s (%an)' $PREV_TAG..HEAD >> $GITHUB_OUTPUT
-        echo 'EOF' >> $GITHUB_OUTPUT
-
-    - name: Create Tag
-      uses: mathieudutour/github-tag-action@v6.1
-      with:
-        custom_tag: v${{ steps.extract-version.outputs.group1 }}
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        tag_prefix: ''
-        tag_message: 'Release v${{ steps.extract-version.outputs.group1 }}'
+        DELIM=__CHANGELOG_EOF_$(uuidgen)__
+        {
+          echo "changelog<<$DELIM"
+          if git tag | grep -q .; then
+            PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)
+            git log --pretty=format:'- %s (%an)' $PREV_TAG..HEAD || echo "- Initial release"
+          else
+            git log --pretty=format:'- %s (%an)' || echo "- Initial release"
+          fi
+          printf '\n%s\n' "$DELIM"
+        } >> "$GITHUB_OUTPUT"
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ steps.extract-version.outputs.group1 }}
-        name: Release v${{ steps.extract-version.outputs.group1 }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: v${{ steps.extract-version.outputs.version }}
+        target_commitish: ${{ github.sha }}
+        name: Release v${{ steps.extract-version.outputs.version }}
         body: |
-          ## Release v${{ steps.extract-version.outputs.group1 }}
+          ## Release v${{ steps.extract-version.outputs.version }}
 
           Automated release created from version bump commit.
 
@@ -92,7 +91,7 @@ jobs:
 
           **Installation:**
           - Download the `.vsix` file from the assets below
-          - Install via VS Code: `code --install-extension vscode-generic-expand-selection-${{ steps.extract-version.outputs.group1 }}.vsix`
+          - Install via VS Code: `code --install-extension vscode-generic-expand-selection-${{ steps.extract-version.outputs.version }}.vsix`
           - Or install from VS Code Extensions marketplace
         files: |
           out.vsix
