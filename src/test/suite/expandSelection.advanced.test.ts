@@ -2,6 +2,15 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { SelectionProvider } from '../../expandSelection';
 
+async function createTestDocument(
+  content: string,
+): Promise<vscode.TextDocument> {
+  return await vscode.workspace.openTextDocument({
+    content,
+    language: 'typescript',
+  });
+}
+
 // Mock editor for testing
 class MockEditor implements Partial<vscode.TextEditor> {
   public selection: vscode.Selection;
@@ -14,116 +23,23 @@ class MockEditor implements Partial<vscode.TextEditor> {
   }
 }
 
-// Enhanced mock document for testing
-class MockDocument implements Partial<vscode.TextDocument> {
-  constructor(private text: string) {}
-
-  getText(): string {
-    return this.text;
-  }
-
-  offsetAt(position: vscode.Position): number {
-    const lines = this.text.split('\n');
-    let offset = 0;
-    for (let i = 0; i < position.line; i++) {
-      offset += lines[i].length + 1; // +1 for newline
-    }
-    return offset + position.character;
-  }
-
-  positionAt(offset: number): vscode.Position {
-    const lines = this.text.split('\n');
-    let currentOffset = 0;
-    for (let line = 0; line < lines.length; line++) {
-      if (currentOffset + lines[line].length >= offset) {
-        return new vscode.Position(line, offset - currentOffset);
-      }
-      currentOffset += lines[line].length + 1; // +1 for newline
-    }
-    return new vscode.Position(
-      lines.length - 1,
-      lines[lines.length - 1].length,
-    );
-  }
-
-  getWordRangeAtPosition(
-    position: vscode.Position,
-    regex?: RegExp,
-  ): vscode.Range | undefined {
-    const offset = this.offsetAt(position);
-    const char = this.text[offset];
-
-    if (!char) {
-      return undefined;
-    }
-
-    // Use provided regex or default patterns
-    const patterns = regex ? [regex] : [/[a-zA-Z0-9_]+/, /[a-zA-Z0-9_.-]+/];
-
-    for (const pattern of patterns) {
-      if (pattern.test(char)) {
-        let wordStart = offset;
-        let wordEnd = offset;
-
-        // Expand backwards to find word start
-        while (wordStart > 0 && pattern.test(this.text[wordStart - 1])) {
-          wordStart--;
-        }
-
-        // Expand forwards to find word end
-        while (wordEnd < this.text.length && pattern.test(this.text[wordEnd])) {
-          wordEnd++;
-        }
-
-        return new vscode.Range(
-          this.positionAt(wordStart),
-          this.positionAt(wordEnd),
-        );
-      }
-    }
-
-    return undefined;
-  }
-
-  lineAt(lineOrPosition: number | vscode.Position): vscode.TextLine {
-    const lineNumber =
-      typeof lineOrPosition === 'number' ? lineOrPosition : lineOrPosition.line;
-    const lines = this.text.split('\n');
-    const lineText = lines[lineNumber] || '';
-    return {
-      text: lineText,
-      lineNumber: lineNumber,
-      range: new vscode.Range(
-        new vscode.Position(lineNumber, 0),
-        new vscode.Position(lineNumber, lineText.length),
-      ),
-      rangeIncludingLineBreak: new vscode.Range(
-        new vscode.Position(lineNumber, 0),
-        new vscode.Position(lineNumber + 1, 0),
-      ),
-      firstNonWhitespaceCharacterIndex: lineText.search(/\S/),
-      isEmptyOrWhitespace: lineText.trim().length === 0,
-    } as vscode.TextLine;
-  }
-}
-
 suite('ExpandSelection Advanced Tests', () => {
   suite('Selection History and Shrinking', () => {
-    test('stores selection history during expansion', () => {
+    test('stores selection history during expansion', async () => {
       const provider = new SelectionProvider();
       const text = 'const obj = { key: "value" }';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Start with "value" selection
       const valueStart = text.indexOf('value');
       const valueEnd = valueStart + 5;
       const initialSelection = new vscode.Selection(
-        mockDoc.positionAt(valueStart),
-        mockDoc.positionAt(valueEnd),
+        doc.positionAt(valueStart),
+        doc.positionAt(valueEnd),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         initialSelection,
       ) as unknown as vscode.TextEditor;
 
@@ -135,21 +51,21 @@ suite('ExpandSelection Advanced Tests', () => {
       assert.notStrictEqual(mockEditor.selection.end, initialSelection.end);
     });
 
-    test('shrinks selection using history', () => {
+    test('shrinks selection using history', async () => {
       const provider = new SelectionProvider();
       const text = 'const obj = { key: "value" }';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Start with "value" selection
       const valueStart = text.indexOf('value');
       const valueEnd = valueStart + 5;
       const initialSelection = new vscode.Selection(
-        mockDoc.positionAt(valueStart),
-        mockDoc.positionAt(valueEnd),
+        doc.positionAt(valueStart),
+        doc.positionAt(valueEnd),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         initialSelection,
       ) as unknown as vscode.TextEditor;
 
@@ -177,20 +93,20 @@ suite('ExpandSelection Advanced Tests', () => {
       );
     });
 
-    test('handles multiple expansions and shrinks', () => {
+    test('handles multiple expansions and shrinks', async () => {
       const provider = new SelectionProvider();
       const text = 'function test() { const obj = { key: "value" }; }';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       const valueStart = text.indexOf('value');
       const valueEnd = valueStart + 5;
       const initialSelection = new vscode.Selection(
-        mockDoc.positionAt(valueStart),
-        mockDoc.positionAt(valueEnd),
+        doc.positionAt(valueStart),
+        doc.positionAt(valueEnd),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         initialSelection,
       ) as unknown as vscode.TextEditor;
 
@@ -217,10 +133,10 @@ suite('ExpandSelection Advanced Tests', () => {
       assert.deepStrictEqual(mockEditor.selection, step0);
     });
 
-    test('limits selection history size', () => {
+    test('limits selection history size', async () => {
       const provider = new SelectionProvider();
       const text = 'a'.repeat(1000); // Long text
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       let currentSelection = new vscode.Selection(
         new vscode.Position(0, 0),
@@ -228,7 +144,7 @@ suite('ExpandSelection Advanced Tests', () => {
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         currentSelection,
       ) as unknown as vscode.TextEditor;
 
@@ -261,10 +177,10 @@ suite('ExpandSelection Advanced Tests', () => {
       assert.ok(shrinkCount <= 100);
     });
 
-    test('shrink with empty history does nothing', () => {
+    test('shrink with empty history does nothing', async () => {
       const provider = new SelectionProvider();
       const text = 'const value = 123';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       const initialSelection = new vscode.Selection(
         new vscode.Position(0, 6),
@@ -272,7 +188,7 @@ suite('ExpandSelection Advanced Tests', () => {
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         initialSelection,
       ) as unknown as vscode.TextEditor;
 
@@ -285,30 +201,30 @@ suite('ExpandSelection Advanced Tests', () => {
   });
 
   suite('Complex Selection Scenarios', () => {
-    test('handles deeply nested structures', () => {
+    test('handles deeply nested structures', async () => {
       const provider = new SelectionProvider();
       const text =
         'const config = { api: { endpoints: { users: "/api/users/{id}" } } }';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Start from "id" inside the deeply nested string
       const idStart = text.indexOf('id');
       const idEnd = idStart + 2;
       const initialSelection = new vscode.Selection(
-        mockDoc.positionAt(idStart),
-        mockDoc.positionAt(idEnd),
+        doc.positionAt(idStart),
+        doc.positionAt(idEnd),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         initialSelection,
       ) as unknown as vscode.TextEditor;
 
       // Should be able to expand through multiple levels
       provider.expandSelection(mockEditor);
       let selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
 
       // Should have expanded to at least the string content
@@ -316,28 +232,28 @@ suite('ExpandSelection Advanced Tests', () => {
       assert.ok(selectedText.includes('id'));
     });
 
-    test('handles mixed quote types', () => {
+    test('handles mixed quote types', async () => {
       const provider = new SelectionProvider();
       const text = `const template = \`Hello "\${name}" and '\${greeting}'\``;
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Start from "name" inside template literal
       const nameStart = text.indexOf('name');
       const nameEnd = nameStart + 4;
       const initialSelection = new vscode.Selection(
-        mockDoc.positionAt(nameStart),
-        mockDoc.positionAt(nameEnd),
+        doc.positionAt(nameStart),
+        doc.positionAt(nameEnd),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         initialSelection,
       ) as unknown as vscode.TextEditor;
 
       provider.expandSelection(mockEditor);
       const selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
 
       // Should handle the mixed quotes correctly
@@ -345,87 +261,87 @@ suite('ExpandSelection Advanced Tests', () => {
       assert.ok(selectedText.length > 4);
     });
 
-    test('prioritizes smaller expansions', () => {
+    test('prioritizes smaller expansions', async () => {
       const provider = new SelectionProvider();
       const text = 'function(array[index])';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Start from "index"
       const indexStart = text.indexOf('index');
       const indexEnd = indexStart + 5;
       const initialSelection = new vscode.Selection(
-        mockDoc.positionAt(indexStart),
-        mockDoc.positionAt(indexEnd),
+        doc.positionAt(indexStart),
+        doc.positionAt(indexEnd),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         initialSelection,
       ) as unknown as vscode.TextEditor;
 
       provider.expandSelection(mockEditor);
       const selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
 
       // Should select the brackets first (smaller expansion)
       assert.strictEqual(selectedText, '[index]');
     });
 
-    test('handles code with comments', () => {
+    test('handles code with comments', async () => {
       const provider = new SelectionProvider();
       const text = `function test() {
   // This is a comment
   const value = "string"; // End comment
   return value;
 }`;
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Start from "string" in the quoted text
       const stringStart = text.indexOf('string');
       const stringEnd = stringStart + 6;
       const initialSelection = new vscode.Selection(
-        mockDoc.positionAt(stringStart),
-        mockDoc.positionAt(stringEnd),
+        doc.positionAt(stringStart),
+        doc.positionAt(stringEnd),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         initialSelection,
       ) as unknown as vscode.TextEditor;
 
       provider.expandSelection(mockEditor);
       const selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
 
       // Should expand to the quoted string, ignoring comments
       assert.strictEqual(selectedText, '"string"');
     });
 
-    test('handles empty selections', () => {
+    test('handles empty selections', async () => {
       const provider = new SelectionProvider();
       const text = 'const obj = { key: value }';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Empty selection (cursor position) at "value"
       const valueStart = text.indexOf('value');
       const emptySelection = new vscode.Selection(
-        mockDoc.positionAt(valueStart),
-        mockDoc.positionAt(valueStart),
+        doc.positionAt(valueStart),
+        doc.positionAt(valueStart),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         emptySelection,
       ) as unknown as vscode.TextEditor;
 
       provider.expandSelection(mockEditor);
       const selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
 
       // Should expand to select the word
@@ -434,47 +350,47 @@ suite('ExpandSelection Advanced Tests', () => {
   });
 
   suite('Edge Cases and Error Handling', () => {
-    test('handles very long lines', () => {
+    test('handles very long lines', async () => {
       const provider = new SelectionProvider();
       const longString = 'x'.repeat(10000);
       const text = `const long = "${longString}"`;
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Start from middle of long string
       const middlePos = text.indexOf(longString) + longString.length / 2;
       const selection = new vscode.Selection(
-        mockDoc.positionAt(middlePos),
-        mockDoc.positionAt(middlePos + 1),
+        doc.positionAt(middlePos),
+        doc.positionAt(middlePos + 1),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         selection,
       ) as unknown as vscode.TextEditor;
 
       provider.expandSelection(mockEditor);
       const selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
 
       // Should handle long text efficiently
       assert.ok(selectedText.length > 1);
     });
 
-    test('handles malformed syntax gracefully', () => {
+    test('handles malformed syntax gracefully', async () => {
       const provider = new SelectionProvider();
       const text = 'const broken = { key: "unclosed string'; // Missing closing quote and brace
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       const keyStart = text.indexOf('key');
       const selection = new vscode.Selection(
-        mockDoc.positionAt(keyStart),
-        mockDoc.positionAt(keyStart + 3),
+        doc.positionAt(keyStart),
+        doc.positionAt(keyStart + 3),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         selection,
       ) as unknown as vscode.TextEditor;
 
@@ -484,53 +400,53 @@ suite('ExpandSelection Advanced Tests', () => {
       });
     });
 
-    test('handles selections at document boundaries', () => {
+    test('handles selections at document boundaries', async () => {
       const provider = new SelectionProvider();
       const text = 'start';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Selection at very end of document
       const endSelection = new vscode.Selection(
-        mockDoc.positionAt(text.length - 1),
-        mockDoc.positionAt(text.length),
+        doc.positionAt(text.length - 1),
+        doc.positionAt(text.length),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         endSelection,
       ) as unknown as vscode.TextEditor;
 
       provider.expandSelection(mockEditor);
       const selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
 
       // Should expand to full word
       assert.strictEqual(selectedText, 'start');
     });
 
-    test('handles unicode characters', () => {
+    test('handles unicode characters', async () => {
       const provider = new SelectionProvider();
       const text = 'const emoji = "🚀 Hello 世界"';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Start from the middle of the unicode string
       const helloStart = text.indexOf('Hello');
       const selection = new vscode.Selection(
-        mockDoc.positionAt(helloStart),
-        mockDoc.positionAt(helloStart + 5),
+        doc.positionAt(helloStart),
+        doc.positionAt(helloStart + 5),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         selection,
       ) as unknown as vscode.TextEditor;
 
       provider.expandSelection(mockEditor);
       const selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
 
       // Should handle unicode properly
@@ -538,19 +454,19 @@ suite('ExpandSelection Advanced Tests', () => {
       assert.ok(selectedText.includes('世界'));
     });
 
-    test('no expansion when no candidates found', () => {
+    test('no expansion when no candidates found', async () => {
       const provider = new SelectionProvider();
       const text = 'plain text without special characters';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Select the entire text
       const fullSelection = new vscode.Selection(
         new vscode.Position(0, 0),
-        mockDoc.positionAt(text.length),
+        doc.positionAt(text.length),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         fullSelection,
       ) as unknown as vscode.TextEditor;
 
@@ -563,63 +479,63 @@ suite('ExpandSelection Advanced Tests', () => {
   });
 
   suite('Integration with Different Finders', () => {
-    test('token finder integration', () => {
+    test('token finder integration', async () => {
       const provider = new SelectionProvider();
       const text = 'const CONSTANT_VALUE = 123';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Start with part of the constant
       const constantStart = text.indexOf('CONSTANT');
       const selection = new vscode.Selection(
-        mockDoc.positionAt(constantStart),
-        mockDoc.positionAt(constantStart + 8), // "CONSTANT"
+        doc.positionAt(constantStart),
+        doc.positionAt(constantStart + 8), // "CONSTANT"
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         selection,
       ) as unknown as vscode.TextEditor;
 
       provider.expandSelection(mockEditor);
       const selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
 
       // Should expand to full token including underscores
       assert.strictEqual(selectedText, 'CONSTANT_VALUE');
     });
 
-    test('multiple finder types work together', () => {
+    test('multiple finder types work together', async () => {
       const provider = new SelectionProvider();
       const text = 'array[obj.method("param")]';
-      const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+      const doc = await createTestDocument(text);
 
       // Start from "param"
       const paramStart = text.indexOf('param');
       const selection = new vscode.Selection(
-        mockDoc.positionAt(paramStart),
-        mockDoc.positionAt(paramStart + 5),
+        doc.positionAt(paramStart),
+        doc.positionAt(paramStart + 5),
       );
 
       const mockEditor = new MockEditor(
-        mockDoc,
+        doc,
         selection,
       ) as unknown as vscode.TextEditor;
 
       // First expansion should be quotes
       provider.expandSelection(mockEditor);
       let selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
       assert.strictEqual(selectedText, '"param"');
 
       // Next expansion should be parentheses
       provider.expandSelection(mockEditor);
       selectedText = text.substring(
-        mockDoc.offsetAt(mockEditor.selection.start),
-        mockDoc.offsetAt(mockEditor.selection.end),
+        doc.offsetAt(mockEditor.selection.start),
+        doc.offsetAt(mockEditor.selection.end),
       );
       assert.strictEqual(selectedText, '("param")');
     });

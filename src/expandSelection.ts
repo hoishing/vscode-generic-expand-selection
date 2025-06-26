@@ -6,41 +6,72 @@ import {
   findToken,
 } from './finders';
 
+const outputChannel = vscode.window.createOutputChannel(
+  'Generic Expand Selection',
+);
+
 export class SelectionProvider {
-  private selectionHistory: vscode.Selection[] = [];
+  private selectionHistories: vscode.Selection[][] = [];
 
   expandSelection(editor: vscode.TextEditor) {
     const document = editor.document;
-    const selection = editor.selection;
-
+    const selections = editor.selections || [editor.selection];
     const text = document.getText();
-    const startOffset = document.offsetAt(selection.start);
-    const endOffset = document.offsetAt(selection.end);
 
-    // Try scoped expansion
-    const newRange = this.findNextExpansion(
-      text,
-      startOffset,
-      endOffset,
-      document,
-    );
-    if (newRange) {
-      // Store current selection for retract functionality before changing
-      this.selectionHistory.push(selection);
-      if (this.selectionHistory.length > 100) {
-        this.selectionHistory.shift();
+    const newSelections: vscode.Selection[] = [];
+
+    for (let i = 0; i < selections.length; i++) {
+      const selection = selections[i];
+      const startOffset = document.offsetAt(selection.start);
+      const endOffset = document.offsetAt(selection.end);
+
+      const newRange = this.findNextExpansion(
+        text,
+        startOffset,
+        endOffset,
+        document,
+      );
+
+      if (newRange) {
+        if (!this.selectionHistories[i]) {
+          this.selectionHistories[i] = [];
+        }
+        this.selectionHistories[i].push(selection);
+        if (this.selectionHistories[i].length > 100) {
+          this.selectionHistories[i].shift();
+        }
+        const newStart = document.positionAt(newRange.start);
+        const newEnd = document.positionAt(newRange.end);
+        newSelections.push(new vscode.Selection(newStart, newEnd));
+      } else {
+        newSelections.push(selection);
       }
-      const newStart = document.positionAt(newRange.start);
-      const newEnd = document.positionAt(newRange.end);
-      editor.selection = new vscode.Selection(newStart, newEnd);
+    }
+
+    if (editor.selections) {
+      editor.selections = newSelections;
+    } else {
+      editor.selection = newSelections[0];
     }
   }
 
   shrinkSelection(editor: vscode.TextEditor) {
-    if (this.selectionHistory.length > 0) {
-      // Restore previous selection from history
-      const previousSelection = this.selectionHistory.pop()!;
-      editor.selection = previousSelection;
+    const selections = editor.selections || [editor.selection];
+    const newSelections: vscode.Selection[] = [];
+
+    for (let i = 0; i < selections.length; i++) {
+      if (this.selectionHistories[i] && this.selectionHistories[i].length > 0) {
+        const previousSelection = this.selectionHistories[i].pop()!;
+        newSelections.push(previousSelection);
+      } else {
+        newSelections.push(selections[i]);
+      }
+    }
+
+    if (editor.selections) {
+      editor.selections = newSelections;
+    } else {
+      editor.selection = newSelections[0];
     }
   }
 
@@ -59,6 +90,9 @@ export class SelectionProvider {
         line: findLineExpansion(text, startIndex, endIndex, document),
       };
 
+    const selectionValue = text.substring(startIndex, endIndex);
+    outputChannel.appendLine('[expandSelection] Current: ' + selectionValue);
+
     // Return the smallest valid expansion, with priority logic
     let best: { start: number; end: number } | null = null;
     let smallest = Infinity;
@@ -76,10 +110,16 @@ export class SelectionProvider {
       }
     }
 
-    for (const [_, candidate] of Object.entries(candidateMap)) {
+    for (const [key, candidate] of Object.entries(candidateMap)) {
       if (!candidate) {
         continue;
       }
+      outputChannel.appendLine(
+        `[expandSelection] Candidate: ${key} - ${text.substring(
+          candidate.start,
+          candidate.end,
+        )}`,
+      );
       const size = candidate.end - candidate.start;
       if (size > 0 && (best === null || size < smallest)) {
         best = candidate;

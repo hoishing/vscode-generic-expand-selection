@@ -2,67 +2,22 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { findLineExpansion } from '../../../finders/line';
 
-// Mock document for testing
-class MockDocument implements Partial<vscode.TextDocument> {
-  constructor(private text: string) {}
-
-  getText(): string {
-    return this.text;
-  }
-
-  offsetAt(position: vscode.Position): number {
-    const lines = this.text.split('\n');
-    let offset = 0;
-    for (let i = 0; i < position.line; i++) {
-      offset += lines[i].length + 1; // +1 for newline
-    }
-    return offset + position.character;
-  }
-
-  positionAt(offset: number): vscode.Position {
-    const lines = this.text.split('\n');
-    let currentOffset = 0;
-    for (let line = 0; line < lines.length; line++) {
-      if (currentOffset + lines[line].length >= offset) {
-        return new vscode.Position(line, offset - currentOffset);
-      }
-      currentOffset += lines[line].length + 1; // +1 for newline
-    }
-    return new vscode.Position(
-      lines.length - 1,
-      lines[lines.length - 1].length,
-    );
-  }
-
-  lineAt(lineOrPosition: number | vscode.Position): vscode.TextLine {
-    const lineNumber =
-      typeof lineOrPosition === 'number' ? lineOrPosition : lineOrPosition.line;
-    const lines = this.text.split('\n');
-    const lineText = lines[lineNumber] || '';
-    return {
-      text: lineText,
-      lineNumber: lineNumber,
-      range: new vscode.Range(
-        new vscode.Position(lineNumber, 0),
-        new vscode.Position(lineNumber, lineText.length),
-      ),
-      rangeIncludingLineBreak: new vscode.Range(
-        new vscode.Position(lineNumber, 0),
-        new vscode.Position(lineNumber + 1, 0),
-      ),
-      firstNonWhitespaceCharacterIndex: lineText.search(/\S/),
-      isEmptyOrWhitespace: lineText.trim().length === 0,
-    } as vscode.TextLine;
-  }
+async function createTestDocument(
+  content: string,
+): Promise<vscode.TextDocument> {
+  return await vscode.workspace.openTextDocument({
+    content,
+    language: 'typescript',
+  });
 }
 
 suite('Line Finder Tests', () => {
-  test('expands single line selection to full line', () => {
+  test('expands single line selection to full line', async () => {
     const text = 'const variable = value';
-    const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+    const doc = await createTestDocument(text);
     const start = text.indexOf('variable');
     const end = start + 'variable'.length;
-    const result = findLineExpansion(text, start, end, mockDoc); // "variable" -> full line
+    const result = findLineExpansion(text, start, end, doc); // "variable" -> full line
 
     assert.ok(result);
     assert.strictEqual(result.start, 0); // Start of line
@@ -70,15 +25,15 @@ suite('Line Finder Tests', () => {
     assert.strictEqual(text.substring(result.start, result.end), text);
   });
 
-  test('expands multi-line selection to line boundaries with trimming', () => {
+  test('expands multi-line selection to line boundaries with trimming', async () => {
     const text = '  line1  \n  line2  \n  line3  ';
-    const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+    const doc = await createTestDocument(text);
 
     // Select part of line1 to part of line2
     const line1Start = text.indexOf('line1');
     const line2End = text.indexOf('line2') + 5;
 
-    const result = findLineExpansion(text, line1Start, line2End, mockDoc);
+    const result = findLineExpansion(text, line1Start, line2End, doc);
 
     // If the current logic returns null, test for that case
     if (result) {
@@ -91,33 +46,33 @@ suite('Line Finder Tests', () => {
     }
   });
 
-  test('handles single line with leading/trailing whitespace', () => {
+  test('handles single line with leading/trailing whitespace', async () => {
     const text = '   const value = 123;   ';
-    const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+    const doc = await createTestDocument(text);
 
     // Select part of the content
     const valueStart = text.indexOf('value');
-    const result = findLineExpansion(text, valueStart, valueStart + 5, mockDoc);
+    const result = findLineExpansion(text, valueStart, valueStart + 5, doc);
 
     assert.ok(result);
     const selectedText = text.substring(result.start, result.end);
     assert.strictEqual(selectedText, 'const value = 123'); // Without trailing semicolon
   });
 
-  test('handles multi-line with complex indentation', () => {
+  test('handles multi-line with complex indentation', async () => {
     const text = `function example() {
     if (condition) {
         const nested = value;
         return nested;
     }
 }`;
-    const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+    const doc = await createTestDocument(text);
 
     // Select from "const" to "return"
     const constStart = text.indexOf('const');
     const returnEnd = text.indexOf('return') + 6;
 
-    const result = findLineExpansion(text, constStart, returnEnd, mockDoc);
+    const result = findLineExpansion(text, constStart, returnEnd, doc);
 
     assert.ok(result);
     const selectedText = text.substring(result.start, result.end);
@@ -127,11 +82,11 @@ suite('Line Finder Tests', () => {
     assert.ok(!selectedText.startsWith('    ')); // Should be trimmed
   });
 
-  test('returns null for empty trimmed content', () => {
+  test('returns null for empty trimmed content', async () => {
     const text = '   \n   \n   ';
-    const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+    const doc = await createTestDocument(text);
 
-    const result = findLineExpansion(text, 1, 5, mockDoc);
+    const result = findLineExpansion(text, 1, 5, doc);
 
     // Should return an empty candidate with start/end positions
     assert.ok(result);
@@ -139,13 +94,13 @@ suite('Line Finder Tests', () => {
     assert.strictEqual(result.end, 7);
   });
 
-  test('content start and end equal start and end', () => {
+  test('content start and end equal start and end', async () => {
     const text = 'const value = 123';
-    const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+    const doc = await createTestDocument(text);
 
     const start = text.indexOf('value');
     const end = start + 'value'.length;
-    const result = findLineExpansion(text, start, end, mockDoc); // "value"
+    const result = findLineExpansion(text, start, end, doc); // "value"
 
     assert.ok(result);
     // For line expansions, start and end should be correct (should expand to the full trimmed line)
@@ -153,15 +108,15 @@ suite('Line Finder Tests', () => {
     assert.strictEqual(result.end, 17);
   });
 
-  test('works with selections spanning many lines', () => {
+  test('works with selections spanning many lines', async () => {
     const text = `line1\n    line2\n    line3\n    line4\n    line5`;
-    const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+    const doc = await createTestDocument(text);
 
     // Select from middle of line2 to middle of line4
     const line2Start = text.indexOf('line2');
     const line4End = text.indexOf('line4') + 'line4'.length;
 
-    const result = findLineExpansion(text, line2Start, line4End, mockDoc);
+    const result = findLineExpansion(text, line2Start, line4End, doc);
 
     // If the current logic returns null, test for that case
     if (result) {
@@ -177,23 +132,23 @@ suite('Line Finder Tests', () => {
     }
   });
 
-  test('handles line at document start', () => {
+  test('handles line at document start', async () => {
     const text = 'first line\nsecond line';
-    const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+    const doc = await createTestDocument(text);
 
     // Select part of first line
     const start = text.indexOf('rst l');
     const end = start + 'rst l'.length;
-    const result = findLineExpansion(text, start, end, mockDoc); // "rst l"
+    const result = findLineExpansion(text, start, end, doc); // "rst l"
 
     assert.ok(result);
     const selectedText = text.substring(result.start, result.end);
     assert.strictEqual(selectedText, 'first line');
   });
 
-  test('handles line at document end', () => {
+  test('handles line at document end', async () => {
     const text = 'first line\nsecond line';
-    const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+    const doc = await createTestDocument(text);
 
     // Select part of last line
     const lastLineStart = text.indexOf('second');
@@ -201,7 +156,7 @@ suite('Line Finder Tests', () => {
       text,
       lastLineStart,
       lastLineStart + 'second'.length,
-      mockDoc,
+      doc,
     );
 
     assert.ok(result);
@@ -209,15 +164,15 @@ suite('Line Finder Tests', () => {
     assert.strictEqual(selectedText, 'second line');
   });
 
-  test('handles empty lines in multi-line selection', () => {
+  test('handles empty lines in multi-line selection', async () => {
     const text = 'line1\n\nline3\n\nline5';
-    const mockDoc = new MockDocument(text) as unknown as vscode.TextDocument;
+    const doc = await createTestDocument(text);
 
     // Select from line1 to line5
     const line1Start = text.indexOf('line1');
     const line5End = text.indexOf('line5') + 'line5'.length;
 
-    const result = findLineExpansion(text, line1Start, line5End, mockDoc);
+    const result = findLineExpansion(text, line1Start, line5End, doc);
 
     // If the current logic returns null, test for that case
     if (result) {

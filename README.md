@@ -21,23 +21,24 @@ Smartly expand or shrink your code selection, recover from misclicks or accident
 - **Expand Selection**: `Ctrl+E` (Windows/Linux) or `Cmd+E` (Mac)
 - **Retract Selection**: `Ctrl+Shift+E` (Windows/Linux) or `Cmd+Shift+E` (Mac)
 
+> [!TIP]
+> Both commands work with single and multiple cursor selections.
+
 ### Expansion Examples
 
-#### Basic Token Expansion
+Text: `const config = { url: 'https://example.com' };`
 
-```javascript
-const API_BASE_URL = 'https://api.example.com';
+```txt
+With cursor on `xamp`, next expansions will be:
+→ example
+→ example.com
+→ https://example.com
+→ 'https://example.com'
+→ url: 'https://example.com'
+→ { url: 'https://example.com' }
+→ const config = { url: 'https://example.com' }
+→ const config = { url: 'https://example.com' };
 ```
-
-With cursor on `api` → `api.example.com` → `https://api.example.com` → full string
-
-#### Nested Scopes
-
-```javascript
-const config = { url: 'https://example.com' };
-```
-
-With cursor on `example` → `example.com` → `https://example.com` → `[url]` → `{...}`
 
 ## Commands
 
