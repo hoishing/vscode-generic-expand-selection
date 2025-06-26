@@ -23,21 +23,19 @@ Smartly expand or shrink your code selection, recover from misclicks or accident
 
 ### Expansion Examples
 
-#### Basic Token Expansion
+Text: `const config = { url: 'https://example.com' };`
 
-```javascript
-const API_BASE_URL = 'https://api.example.com';
+```txt
+With cursor on `xamp`, next expansions will be:
+→ example
+→ example.com
+→ https://example.com
+→ 'https://example.com'
+→ url: 'https://example.com'
+→ { url: 'https://example.com' }
+→ const config = { url: 'https://example.com' }
+→ const config = { url: 'https://example.com' };
 ```
-
-With cursor on `api` → `api.example.com` → `https://api.example.com` → full string
-
-#### Nested Scopes
-
-```javascript
-const config = { url: 'https://example.com' };
-```
-
-With cursor on `example` → `example.com` → `https://example.com` → `[url]` → `{...}`
 
 ## Commands
 

@@ -6,6 +6,10 @@ import {
   findToken,
 } from './finders';
 
+const outputChannel = vscode.window.createOutputChannel(
+  'Generic Expand Selection',
+);
+
 export class SelectionProvider {
   private selectionHistory: vscode.Selection[] = [];
 
@@ -59,6 +63,9 @@ export class SelectionProvider {
         line: findLineExpansion(text, startIndex, endIndex, document),
       };
 
+    const selectionValue = text.substring(startIndex, endIndex);
+    outputChannel.appendLine('[expandSelection] Current: ' + selectionValue);
+
     // Return the smallest valid expansion, with priority logic
     let best: { start: number; end: number } | null = null;
     let smallest = Infinity;
@@ -76,10 +83,16 @@ export class SelectionProvider {
       }
     }
 
-    for (const [_, candidate] of Object.entries(candidateMap)) {
+    for (const [key, candidate] of Object.entries(candidateMap)) {
       if (!candidate) {
         continue;
       }
+      outputChannel.appendLine(
+        `[expandSelection] Candidate: ${key} - ${text.substring(
+          candidate.start,
+          candidate.end,
+        )}`,
+      );
       const size = candidate.end - candidate.start;
       if (size > 0 && (best === null || size < smallest)) {
         best = candidate;

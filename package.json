@@ -49,7 +49,7 @@
 		"test": "tsc -p . --outDir out && node esbuild.js && vscode-test",
 		"build": "pnpm run check && node esbuild.js --production && pnpm dlx vsce package --no-dependencies -o out.vsix",
 		"publish": "pnpm dlx vsce publish --no-dependencies",
-		"vsce:install": "pnpm run build && code --install-extension out.vsix"
+		"local": "pnpm run build && code --install-extension out.vsix"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.29.0",

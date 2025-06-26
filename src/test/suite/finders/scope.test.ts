@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { findNearestScope } from '../../../finders/scope';
 
 suite('Scope Finder Tests', () => {
-  test('finds square brackets', () => {
+  test('finds square brackets', async () => {
     const text = 'array[index]';
     const start = text.indexOf('index');
     const end = start + 'index'.length;
@@ -15,7 +15,7 @@ suite('Scope Finder Tests', () => {
     assert.strictEqual(text.substring(result.start, result.end), '[index]');
   });
 
-  test('finds curly braces', () => {
+  test('finds curly braces', async () => {
     const text = 'object{key: value}';
     const start = text.indexOf('key');
     const end = start + 'key'.length;
@@ -27,7 +27,7 @@ suite('Scope Finder Tests', () => {
     assert.strictEqual(text.substring(result.start, result.end), 'key: value');
   });
 
-  test('finds parentheses', () => {
+  test('finds parentheses', async () => {
     const text = 'function(param1, param2)';
     const start = text.indexOf('param1');
     const end = start + 'param1'.length;
@@ -42,7 +42,7 @@ suite('Scope Finder Tests', () => {
     );
   });
 
-  test('finds nested scopes - innermost first', () => {
+  test('finds nested scopes - innermost first', async () => {
     const text = 'array[obj{key: value}]';
     const result = findNearestScope(text, 10, 13); // "key"
 
@@ -51,7 +51,7 @@ suite('Scope Finder Tests', () => {
     assert.strictEqual(text.substring(result.start, result.end), 'key: value');
   });
 
-  test('finds nested scopes - expands to outer', () => {
+  test('finds nested scopes - expands to outer', async () => {
     const text = 'array[obj{key: value}]';
     const result = findNearestScope(text, 6, 21); // "obj{key: value}"
 
@@ -63,7 +63,7 @@ suite('Scope Finder Tests', () => {
     );
   });
 
-  test('handles multiple nested levels', () => {
+  test('handles multiple nested levels', async () => {
     const text = 'func(array[obj{key: (inner)}])';
     const result = findNearestScope(text, 21, 26); // "inner"
 
@@ -72,7 +72,7 @@ suite('Scope Finder Tests', () => {
     assert.strictEqual(text.substring(result.start, result.end), '(inner)');
   });
 
-  test('finds smallest containing scope', () => {
+  test('finds smallest containing scope', async () => {
     const text = 'func(param1) and func(param2)';
     const result = findNearestScope(text, 22, 28); // "param2"
 
@@ -85,28 +85,28 @@ suite('Scope Finder Tests', () => {
     }
   });
 
-  test('handles unbalanced scopes gracefully', () => {
+  test('handles unbalanced scopes gracefully', async () => {
     const text = 'incomplete[bracket';
     const result = findNearestScope(text, 11, 17); // "bracket"
 
     assert.strictEqual(result, null);
   });
 
-  test('returns null when no containing scope found', () => {
+  test('returns null when no containing scope found', async () => {
     const text = 'no scopes here';
     const result = findNearestScope(text, 5, 10);
 
     assert.strictEqual(result, null);
   });
 
-  test('returns null when selection equals scope boundaries', () => {
+  test('returns null when selection equals scope boundaries', async () => {
     const text = 'array[index]';
     const result = findNearestScope(text, 5, 12); // Exact bracket match
 
     assert.strictEqual(result, null);
   });
 
-  test('handles mixed scope types', () => {
+  test('handles mixed scope types', async () => {
     const text = 'func({key: [1, 2, 3]})';
     const result = findNearestScope(text, 11, 12); // "1"
 
@@ -115,7 +115,7 @@ suite('Scope Finder Tests', () => {
     assert.strictEqual(text.substring(result.start, result.end), '[1, 2, 3]');
   });
 
-  test('handles empty scopes', () => {
+  test('handles empty scopes', async () => {
     const text = 'empty[]';
     const result = findNearestScope(text, 6, 6); // Empty selection inside brackets
 
@@ -123,7 +123,7 @@ suite('Scope Finder Tests', () => {
     assert.strictEqual(text.substring(result.start, result.end), '[]');
   });
 
-  test('complex nested structure', () => {
+  test('complex nested structure', async () => {
     const text = 'data[items.map(item => ({id: item.id, name: item.name}))]';
     const result = findNearestScope(text, 34, 41); // "item.id"
 
@@ -135,7 +135,7 @@ suite('Scope Finder Tests', () => {
     );
   });
 
-  test('respects scope precedence', () => {
+  test('respects scope precedence', async () => {
     const text = 'func((nested))';
     const result = findNearestScope(text, 6, 12); // "nested"
 
