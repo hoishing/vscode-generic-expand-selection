@@ -21,6 +21,9 @@ Smartly expand or shrink your code selection, recover from misclicks or accident
 - **Expand Selection**: `Ctrl+E` (Windows/Linux) or `Cmd+E` (Mac)
 - **Retract Selection**: `Ctrl+Shift+E` (Windows/Linux) or `Cmd+Shift+E` (Mac)
 
+> [!TIP]
+> Both commands work with single and multiple cursor selections.
+
 ### Expansion Examples
 
 Text: `const config = { url: 'https://example.com' };`

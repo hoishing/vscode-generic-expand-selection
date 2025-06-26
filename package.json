@@ -9,7 +9,7 @@
 		"url": "git://github.com/dandehoon/vscode-generic-expand-selection.git"
 	},
 	"engines": {
-		"vscode": "^1.92.0"
+		"vscode": "^1.101.0"
 	},
 	"categories": [
 		"Other"
@@ -54,17 +54,17 @@
 	"devDependencies": {
 		"@eslint/js": "^9.29.0",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "22.x",
-		"@types/vscode": "^1.92.0",
-		"@typescript-eslint/eslint-plugin": "^8.34.1",
-		"@typescript-eslint/parser": "^8.34.1",
+		"@types/node": "~22.15.33",
+		"@types/vscode": "^1.101.0",
+		"@typescript-eslint/eslint-plugin": "^8.35.0",
+		"@typescript-eslint/parser": "^8.35.0",
 		"@vscode/test-cli": "^0.0.11",
-		"@vscode/test-electron": "^2.4.0",
-		"@vscode/vsce": "^3.5.0",
+		"@vscode/test-electron": "^2.5.2",
+		"@vscode/vsce": "^3.6.0",
 		"esbuild": "^0.25.5",
 		"eslint": "^9.29.0",
-		"mocha": "^11.7.0",
+		"mocha": "^11.7.1",
 		"typescript": "5.5.4"
 	},
-	"packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac"
+	"packageManager": "pnpm@10.12.3+sha512.467df2c586056165580ad6dfb54ceaad94c5a30f80893ebdec5a44c5aa73c205ae4a5bb9d5ed6bb84ea7c249ece786642bbb49d06a307df218d03da41c317417"
 }
