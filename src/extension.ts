@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import { SelectionProvider } from './expandSelection';
+import { logger } from './logger';
 
 export function activate(context: vscode.ExtensionContext) {
   const provider = new SelectionProvider();
 
   // Register expand selection command
   const expandCommand = vscode.commands.registerCommand(
-    'vscode-generic-expand-selection.expandSelection',
+    'genericExpandSelection.expand',
     () => {
       const editor = vscode.window.activeTextEditor;
       if (editor) {
@@ -17,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register shrink selection command
   const shrinkCommand = vscode.commands.registerCommand(
-    'vscode-generic-expand-selection.shrinkSelection',
+    'genericExpandSelection.shrink',
     () => {
       const editor = vscode.window.activeTextEditor;
       if (editor) {
@@ -26,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  context.subscriptions.push(expandCommand, shrinkCommand);
+  context.subscriptions.push(expandCommand, shrinkCommand, logger);
 }
 
 export function deactivate() {}

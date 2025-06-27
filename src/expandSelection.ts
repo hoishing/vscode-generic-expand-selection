@@ -5,13 +5,14 @@ import {
   findLineExpansion,
   findToken,
 } from './finders';
-
-const outputChannel = vscode.window.createOutputChannel(
-  'Generic Expand Selection',
-);
+import { logger } from './logger';
 
 export class SelectionProvider {
   private selectionHistories: vscode.Selection[][] = [];
+
+  constructor() {
+    // No need for instance logger
+  }
 
   expandSelection(editor: vscode.TextEditor) {
     const document = editor.document;
@@ -91,7 +92,19 @@ export class SelectionProvider {
       };
 
     const selectionValue = text.substring(startIndex, endIndex);
-    outputChannel.appendLine('[expandSelection] Current: ' + selectionValue);
+    logger.debug(`Current selection: "${selectionValue}"`);
+
+    // Log all candidates found
+    for (const [key, candidate] of Object.entries(candidateMap)) {
+      if (candidate) {
+        const candidateText = text.substring(candidate.start, candidate.end);
+        logger.debug(
+          `Found ${key} candidate: "${candidateText}" (${candidate.start}-${candidate.end})`,
+        );
+      } else {
+        logger.debug(`No ${key} candidate found`);
+      }
+    }
 
     // Return the smallest valid expansion, with priority logic
     let best: { start: number; end: number } | null = null;
@@ -110,22 +123,21 @@ export class SelectionProvider {
       }
     }
 
-    for (const [key, candidate] of Object.entries(candidateMap)) {
+    for (const [_, candidate] of Object.entries(candidateMap)) {
       if (!candidate) {
         continue;
       }
-      outputChannel.appendLine(
-        `[expandSelection] Candidate: ${key} - ${text.substring(
-          candidate.start,
-          candidate.end,
-        )}`,
-      );
       const size = candidate.end - candidate.start;
       if (size > 0 && (best === null || size < smallest)) {
         best = candidate;
         smallest = size;
       }
     }
+
+    if (!best) {
+      logger.debug('No valid expansion found');
+    }
+
     return best;
   }
 }
