@@ -1,7 +1,7 @@
 {
 	"name": "vscode-generic-expand-selection",
 	"displayName": "Generic Expand Selection",
-	"description": "Intelligently expand selection to nearest scoped characters like quotes, brackets, and more.",
+	"description": "Smart expands selection to nearest scoped characters like quotes, brackets, and more.",
 	"publisher": "dandehoon",
 	"version": "1.0.0",
 	"repository": {

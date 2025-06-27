@@ -42,8 +42,8 @@ With cursor on `xamp`, next expansions will be:
 
 ## Commands
 
-- **`vscode-generic-expand-selection.expandSelection`**: Expand Selection
-- **`vscode-generic-expand-selection.shrinkSelection`**: Shrink Selection
+- **`genericExpandSelection.expand`**: Expand Selection
+- **`genericExpandSelection.shrink`**: Shrink Selection
 
 ## Development
 
