@@ -21,28 +21,46 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "vscode-generic-expand-selection.expandSelection",
+				"command": "genericExpandSelection.expand",
 				"title": "Expand Selection"
 			},
 			{
-				"command": "vscode-generic-expand-selection.shrinkSelection",
+				"command": "genericExpandSelection.shrink",
 				"title": "Shrink Selection"
 			}
 		],
 		"keybindings": [
 			{
-				"command": "vscode-generic-expand-selection.expandSelection",
+				"command": "genericExpandSelection.expand",
 				"key": "ctrl+e",
 				"mac": "cmd+e",
 				"when": "editorTextFocus"
 			},
 			{
-				"command": "vscode-generic-expand-selection.shrinkSelection",
+				"command": "genericExpandSelection.shrink",
 				"key": "ctrl+shift+e",
 				"mac": "cmd+shift+e",
 				"when": "editorTextFocus && editorHasSelection"
 			}
-		]
+		],
+		"configuration": {
+			"title": "Generic Expand Selection",
+			"properties": {
+				"genericExpandSelection.token.patterns": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [
+						"[a-zA-Z0-9_-]+",
+						"[a-zA-Z0-9_\\-.]+",
+						"[a-zA-Z0-9_\\-.#$@%]+",
+						"[^\\s[\\]{}()\"'`]+"
+					],
+					"description": "Regular expressions for token pattern matching during selection expansion"
+				}
+			}
+		}
 	},
 	"scripts": {
 		"check": "tsc --noEmit && eslint src --ext ts",

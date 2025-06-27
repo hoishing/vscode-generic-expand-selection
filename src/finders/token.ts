@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { SelectionCandidate } from '../types';
 import { getCandidate } from './util';
+import { logger } from '../logger';
 
 /**
  * Finds word boundaries using different regex patterns for extended token detection
@@ -19,17 +20,29 @@ export function findToken(
 
   const currentPosition = document.positionAt(startIndex);
 
-  // Define different word patterns to try
-  const patterns = [
-    /[A-Z]?[a-z]+/, // With single word characters
-    /[a-zA-Z]+/, // With letters only
-    /[a-zA-Z0-9]+/, // With digits
-    /[a-zA-Z0-9_]+/, // With underscores
-    /[a-zA-Z0-9_-]+/, // With hyphens
-    /[a-zA-Z0-9_\-.]+/, // With dots
-    /[a-zA-Z0-9_\-.#$@%]+/, // Extended identifiers with programming symbols
-    /[^\s[\]{}()"'`]+/, // Fallback: all except whitespace, scopes, and quotes
-  ];
+  // Get user-configured patterns or use defaults
+  const config = vscode.workspace.getConfiguration('genericExpandSelection');
+  const userPatterns: string[] = config.get('token.patterns', [
+    '[a-zA-Z0-9_-]+',
+    '[a-zA-Z0-9_\\-.]+',
+    '[a-zA-Z0-9_\\-.#$@%]+',
+    '[^\\s[\\]{}()"\'`]+',
+  ]);
+
+  // Convert string patterns to RegExp objects
+  const patterns: RegExp[] = [];
+  for (const patternStr of userPatterns) {
+    try {
+      patterns.push(new RegExp(patternStr));
+    } catch {
+      logger.error(`Invalid regex pattern in token.patterns: ${patternStr}`);
+    }
+  }
+
+  // If no valid patterns, use fallback
+  if (patterns.length === 0) {
+    patterns.push(/[^\s[\]{}()"'`]+/);
+  }
 
   for (const pattern of patterns) {
     const wordRange = document.getWordRangeAtPosition(currentPosition, pattern);
