@@ -3,7 +3,7 @@
 	"displayName": "Generic Expand Selection",
 	"description": "Smartly expands selection to nearest scoped characters like quotes, brackets, and more.",
 	"publisher": "dandehoon",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"repository": {
 		"type": "git",
 		"url": "git://github.com/dandehoon/vscode-generic-expand-selection.git"
