@@ -39,11 +39,6 @@ export function findToken(
     }
   }
 
-  // If no valid patterns, use fallback
-  if (patterns.length === 0) {
-    patterns.push(/[^\s[\]{}()"'`]+/);
-  }
-
   for (const pattern of patterns) {
     const wordRange = document.getWordRangeAtPosition(currentPosition, pattern);
     if (wordRange) {
