@@ -40,9 +40,8 @@ const esbuildProblemMatcherPlugin = {
     });
     build.onEnd((result) => {
       result.errors.forEach(({ text, location }) => {
-        console.error(`✘ [ERROR] ${text}`);
         console.error(
-          `    ${location.file}:${location.line}:${location.column}:`,
+          `${location.file}:${location.line}:${location.column}: error: ${text}`,
         );
       });
       console.log('[watch] build finished');

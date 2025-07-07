@@ -57,7 +57,8 @@
 						"[a-zA-Z0-9_\\-.#$@%]+",
 						"[^\\s[\\]{}()\"'`]+"
 					],
-					"description": "Regular expressions for token pattern matching during selection expansion"
+					"description": "Regular expressions for token pattern matching during selection expansion",
+					"scope": "language-overridable"
 				}
 			}
 		}
@@ -65,6 +66,7 @@
 	"scripts": {
 		"check": "tsc --noEmit && eslint src --ext ts",
 		"test": "tsc -p . --outDir out && node esbuild.js && vscode-test",
+		"watch": "node esbuild.js --watch",
 		"build": "pnpm run check && node esbuild.js --production && pnpm dlx vsce package --no-dependencies -o out.vsix",
 		"publish": "pnpm dlx vsce publish --no-dependencies",
 		"local": "pnpm run build && code --install-extension out.vsix"
