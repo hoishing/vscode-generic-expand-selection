@@ -40,6 +40,28 @@ With cursor on `xamp`, next expansions will be:
 → const config = { url: 'https://example.com' };
 ```
 
+## Configuration
+
+Customize token expansion by adding `genericExpandSelection.token.patterns` to your `settings.json`. This setting takes an array of regex strings, which are tried in order. You can set a global default and override it for specific languages.
+
+```jsonc
+{
+  // Global setting for all languages
+  "genericExpandSelection.token.patterns": [
+    "[a-zA-Z0-9_-]+", // matches alphanumeric characters, underscores, and hyphens
+    "[a-zA-Z0-9_\\-.]+", // matches identifiers with dots
+    "[^\\s[\\]{}()\"'`]+" // matches any non-whitespace, non-bracket character
+  ],
+
+  // Override for a specific language (e.g., TypeScript)
+  "[typescript]": {
+    "genericExpandSelection.token.patterns": [
+      "\\w+" // In TypeScript, only match word characters
+    ]
+  }
+}
+```
+
 ## Commands
 
 - **`genericExpandSelection.expand`**: Expand Selection
@@ -57,11 +79,14 @@ pnpm run check
 # Run tests (builds TypeScript, runs esbuild, then executes tests)
 pnpm run test
 
+# Watch for changes and rebuild
+pnpm run watch
+
 # Build, type check, lint, and package extension as out.vsix
 pnpm run build
 
 # Build and install the packaged extension locally (outputs out.vsix and installs it)
-pnpm run vsce:install
+pnpm run local
 ```
 
 ## License

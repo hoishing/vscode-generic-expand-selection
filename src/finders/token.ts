@@ -21,7 +21,10 @@ export function findToken(
   const currentPosition = document.positionAt(startIndex);
 
   // Get user-configured patterns or use defaults
-  const config = vscode.workspace.getConfiguration('genericExpandSelection');
+  const config = vscode.workspace.getConfiguration(
+    'genericExpandSelection',
+    document,
+  );
   const userPatterns: string[] = config.get('token.patterns', [
     '[a-zA-Z0-9_-]+',
     '[a-zA-Z0-9_\\-.]+',
