@@ -9,10 +9,27 @@ suite('Config Service Tests', () => {
     const originalGetConfiguration = vscode.workspace.getConfiguration;
 
     try {
-      // Mock getConfiguration to return empty config
+      // Mock getConfiguration to return the actual default values from package.json
       vscode.workspace.getConfiguration = () =>
         ({
-          get: (key: string, defaultValue: any) => defaultValue,
+          get: (key: string, defaultValue: any) => {
+            // Return the actual defaults defined in package.json when no custom value is set
+            /* eslint-disable @typescript-eslint/naming-convention */
+            const defaults: Record<string, any> = {
+              'token.enabled': true,
+              'quote.enabled': true,
+              'scope.enabled': true,
+              'line.enabled': true,
+              'token.patterns': [
+                '[a-zA-Z0-9_-]+',
+                '[a-zA-Z0-9_\\-.]+',
+                '[a-zA-Z0-9_\\-.#$@%]+',
+                '[^\\s[\\]{}()"\'`]+',
+              ],
+            };
+            /* eslint-enable @typescript-eslint/naming-convention */
+            return defaults[key] ?? defaultValue;
+          },
         } as any);
 
       const tokenPatterns = ConfigService.getTokenPatterns();
