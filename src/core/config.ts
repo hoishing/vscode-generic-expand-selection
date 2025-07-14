@@ -1,78 +1,34 @@
 import * as vscode from 'vscode';
 
 /**
- * Configuration keys for the Generic Expand Selection extension
- */
-export type ConfigKey = 
-  | 'token.patterns'
-  | 'token.enabled'
-  | 'quote.enabled'
-  | 'scope.enabled'
-  | 'line.enabled';
-
-/**
- * Configuration value types
- */
-export type ConfigValue<K extends ConfigKey> = 
-  K extends 'token.patterns' ? string[] :
-  K extends 'token.enabled' | 'quote.enabled' | 'scope.enabled' | 'line.enabled' ? boolean :
-  never;
-
-/**
- * Centralized configuration getter utility for the extension
+ * Simple configuration utility for the extension
+ * Config keys must match package.json contributes.configuration
  */
 export class ConfigService {
   private static readonly section = 'genericExpandSelection';
 
-  /**
-   * Gets a configuration value with type safety
-   */
-  static get<K extends ConfigKey>(
-    key: K,
-    document?: vscode.TextDocument,
-  ): ConfigValue<K> {
-    const config = vscode.workspace.getConfiguration(
-      this.section,
-      document?.uri,
-    );
+  static get(key: string, document?: vscode.TextDocument): any {
+    const config = vscode.workspace.getConfiguration(this.section, document);
+    return config.get(key);
+  }
 
-    // Default values for each configuration key
-    const getDefault = (configKey: ConfigKey): any => {
-      switch (configKey) {
-        case 'token.patterns':
-          return [
-            '[a-zA-Z0-9_-]+',
-            '[a-zA-Z0-9_\\-.]+',
-            '[a-zA-Z0-9_\\-.#$@%]+',
-            '[^\\s[\\]{}()"\'`]+',
-          ];
-        case 'token.enabled':
-        case 'quote.enabled':
-        case 'scope.enabled':
-        case 'line.enabled':
-          return true;
-        default:
-          throw new Error(`Unknown config key: ${configKey}`);
-      }
-    };
+  static getBoolean(key: string, document?: vscode.TextDocument): boolean {
+    return this.get(key, document) ?? false;
+  }
 
-    return config.get(key, getDefault(key));
+  static getArray(key: string, document?: vscode.TextDocument): string[] {
+    return this.get(key, document) ?? [];
   }
 
   /**
    * Gets all finder enabled states
    */
-  static getFinderStates(document?: vscode.TextDocument): {
-    token: boolean;
-    quote: boolean;
-    scope: boolean;
-    line: boolean;
-  } {
+  static getFinderStates(document?: vscode.TextDocument) {
     return {
-      token: this.get('token.enabled', document),
-      quote: this.get('quote.enabled', document),
-      scope: this.get('scope.enabled', document),
-      line: this.get('line.enabled', document),
+      token: this.getBoolean('token.enabled', document),
+      quote: this.getBoolean('quote.enabled', document),
+      scope: this.getBoolean('scope.enabled', document),
+      line: this.getBoolean('line.enabled', document),
     };
   }
 
@@ -80,6 +36,6 @@ export class ConfigService {
    * Gets token patterns configuration
    */
   static getTokenPatterns(document?: vscode.TextDocument): string[] {
-    return this.get('token.patterns', document);
+    return this.getArray('token.patterns', document);
   }
 }
