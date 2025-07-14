@@ -6,25 +6,15 @@ Smartly expand or shrink your code selection, recover from misclicks or accident
 
 ## Features
 
-### Expansion Rules
+### Rules
 
-- **Token Expansion**: Expands to word tokens, including identifiers with underscores and dots
-- **Quote Scopes**: Expands to content within quotes (`"`, `'`, `` ` ``)
-- **Bracket Scopes**: Expands to content within brackets (`[]`, `{}`, `()`)
-- **Line Expansion**: Expands to full line content
-- **Selection History**: Remember previous selections for step-by-step shrinking
+**Token Expansion**: Expands to word tokens (identifiers, keywords, etc.) with customizable patterns.
+**Quote Expansion**: Expands to content within quotes (`"`, `'`, `` ` ``)
+**Scope Expansion**: Expands to content within open-close pairs (`[]`, `{}`, `()`)
+**Line Expansion**: Expands to full line(s) content
+**Selection History**: Remember previous selections for step-by-step shrinking
 
-## Usage
-
-### Keybindings
-
-- **Expand Selection**: `Ctrl+E` (Windows/Linux) or `Cmd+E` (Mac)
-- **Retract Selection**: `Ctrl+Shift+E` (Windows/Linux) or `Cmd+Shift+E` (Mac)
-
-> [!TIP]
-> Both commands work with single and multiple cursor selections.
-
-### Expansion Examples
+### Examples
 
 Text: `const config = { url: 'https://example.com' };`
 
@@ -40,32 +30,48 @@ With cursor on `xamp`, next expansions will be:
 → const config = { url: 'https://example.com' };
 ```
 
-## Configuration
+## Usage
 
-Customize token expansion by adding `genericExpandSelection.token.patterns` to your `settings.json`. This setting takes an array of regex strings, which are tried in order. You can set a global default and override it for specific languages.
+### Commands & Keybindings
+
+| Command                         | Description      | Default Keybinding                              |
+| ------------------------------- | ---------------- | ----------------------------------------------- |
+| `genericExpandSelection.expand` | Expand Selection | `Ctrl+E` (Win/Linux), `Cmd+E` (Mac)             |
+| `genericExpandSelection.shrink` | Shrink Selection | `Ctrl+Shift+E` (Win/Linux), `Cmd+Shift+E` (Mac) |
+
+> [!TIP]
+> Both commands work with single and multiple cursor selections.
+
+### Configuration
+
+You can customize how selection expansion works by configuring settings in your VS Code `settings.json`.
+
+#### Example: Common Settings
 
 ```jsonc
 {
-  // Global setting for all languages
+  // Token expansion patterns (global)
   "genericExpandSelection.token.patterns": [
-    "[a-zA-Z0-9_-]+", // matches alphanumeric characters, underscores, and hyphens
-    "[a-zA-Z0-9_\\-.]+", // matches identifiers with dots
-    "[^\\s[\\]{}()\"'`]+" // matches any non-whitespace, non-bracket character
+    "[a-zA-Z0-9_-]+", // Alphanumeric, underscores, hyphens
+    "[a-zA-Z0-9_\\-.]+", // Identifiers with dots
+    "[^\\s[\\]{}()\"'`]+" // Non-whitespace, non-bracket
   ],
 
-  // Override for a specific language (e.g., TypeScript)
-  "[typescript]": {
-    "genericExpandSelection.token.patterns": [
-      "\\w+" // In TypeScript, only match word characters
-    ]
+  // Language-specific overrides
+  "[markdown]": {
+    // Disable scope expansion in Markdown files to avoid issues with brackets
+    "genericExpandSelection.scope.enabled": false
+  },
+  "[json]": {
+    // Disable token expansion in JSON files to focus on quotes and scopes
+    "genericExpandSelection.token.enabled": false
+  },
+  "[go]": {
+    // Match partial key:"value" pairs in Go struct tags
+    "genericExpandSelection.token.patterns": ["[a-zA-Z0-9]+:\"[^\"]*\""]
   }
 }
 ```
-
-## Commands
-
-- **`genericExpandSelection.expand`**: Expand Selection
-- **`genericExpandSelection.shrink`**: Shrink Selection
 
 ## Development
 

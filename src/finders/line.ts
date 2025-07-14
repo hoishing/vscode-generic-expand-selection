@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { SelectionCandidate } from '../types';
+import { SelectionCandidate } from '../core';
 import { getCandidate } from './util';
 
 /**
@@ -10,8 +10,11 @@ export function findLineExpansion(
   text: string,
   startIndex: number,
   endIndex: number,
-  document: vscode.TextDocument,
+  document?: vscode.TextDocument,
 ): SelectionCandidate | null {
+  if (!document) {
+    return null;
+  }
   const startPos = document.positionAt(startIndex);
   const endPos = document.positionAt(endIndex);
 

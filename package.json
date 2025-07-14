@@ -46,6 +46,30 @@
 		"configuration": {
 			"title": "Generic Expand Selection",
 			"properties": {
+				"genericExpandSelection.token.enabled": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable token-based selection expansion",
+					"scope": "language-overridable"
+				},
+				"genericExpandSelection.quote.enabled": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable quote-based selection expansion",
+					"scope": "language-overridable"
+				},
+				"genericExpandSelection.scope.enabled": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable scope-based selection expansion (brackets, braces, parentheses)",
+					"scope": "language-overridable"
+				},
+				"genericExpandSelection.line.enabled": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable line-based selection expansion",
+					"scope": "language-overridable"
+				},
 				"genericExpandSelection.token.patterns": {
 					"type": "array",
 					"items": {

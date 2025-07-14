@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import { SelectionCandidate } from '../types';
+import { SelectionCandidate, ConfigService, getLogger } from '../core';
 import { getCandidate } from './util';
-import { logger } from '../logger';
 
 /**
  * Finds word boundaries using different regex patterns for extended token detection
@@ -10,8 +9,11 @@ export function findToken(
   text: string,
   startIndex: number,
   endIndex: number,
-  document: vscode.TextDocument,
+  document?: vscode.TextDocument,
 ): SelectionCandidate | null {
+  if (!document) {
+    return null;
+  }
   // Skip if current selection already contains a space
   const currentSelection = text.substring(startIndex, endIndex);
   if (currentSelection.includes(' ')) {
@@ -20,20 +22,12 @@ export function findToken(
 
   const currentPosition = document.positionAt(startIndex);
 
-  // Get user-configured patterns or use defaults
-  const config = vscode.workspace.getConfiguration(
-    'genericExpandSelection',
-    document,
-  );
-  const userPatterns: string[] = config.get('token.patterns', [
-    '[a-zA-Z0-9_-]+',
-    '[a-zA-Z0-9_\\-.]+',
-    '[a-zA-Z0-9_\\-.#$@%]+',
-    '[^\\s[\\]{}()"\'`]+',
-  ]);
+  // Get user-configured patterns using config service
+  const userPatterns = ConfigService.getTokenPatterns(document);
 
   // Convert string patterns to RegExp objects
   const patterns: RegExp[] = [];
+  const logger = getLogger();
   for (const patternStr of userPatterns) {
     try {
       patterns.push(new RegExp(patternStr));

@@ -1,14 +1,10 @@
 import * as vscode from 'vscode';
-import {
-  findNearestQuotePair,
-  findNearestScope,
-  findLineExpansion,
-  findToken,
-} from './finders';
-import { logger } from './logger';
+import { getFinders } from '../finders';
+import { getLogger, ConfigService } from '../core';
 
 export class SelectionProvider {
   private selectionHistories: vscode.Selection[][] = [];
+  private logger = getLogger();
 
   constructor() {
     // No need for instance logger
@@ -84,25 +80,29 @@ export class SelectionProvider {
   ): { start: number; end: number } | null {
     // Get all valid candidates from finders as a map
     const candidateMap: Record<string, { start: number; end: number } | null> =
-      {
-        token: findToken(text, startIndex, endIndex, document),
-        quote: findNearestQuotePair(text, startIndex, endIndex),
-        scope: findNearestScope(text, startIndex, endIndex),
-        line: findLineExpansion(text, startIndex, endIndex, document),
-      };
+      {};
+
+    // Iterate over all finders and call enabled ones
+    const finders = getFinders();
+    for (const { name, finder, configKey } of finders) {
+      const isEnabled = ConfigService.get(configKey, document);
+      if (isEnabled) {
+        candidateMap[name] = finder(text, startIndex, endIndex, document);
+      }
+    }
 
     const selectionValue = text.substring(startIndex, endIndex);
-    logger.debug(`Current selection: "${selectionValue}"`);
+    this.logger.debug(`Current selection: "${selectionValue}"`);
 
     // Log all candidates found
     for (const [key, candidate] of Object.entries(candidateMap)) {
       if (candidate) {
         const candidateText = text.substring(candidate.start, candidate.end);
-        logger.debug(
+        this.logger.debug(
           `Found ${key} candidate: "${candidateText}" (${candidate.start}-${candidate.end})`,
         );
       } else {
-        logger.debug(`No ${key} candidate found`);
+        this.logger.debug(`No ${key} candidate found`);
       }
     }
 
@@ -135,7 +135,7 @@ export class SelectionProvider {
     }
 
     if (!best) {
-      logger.debug('No valid expansion found');
+      this.logger.debug('No valid expansion found');
     }
 
     return best;

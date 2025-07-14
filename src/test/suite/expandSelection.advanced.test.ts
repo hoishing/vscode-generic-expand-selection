@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { SelectionProvider } from '../../expandSelection';
+import { SelectionProvider } from '../../services';
 
 async function createTestDocument(
   content: string,
