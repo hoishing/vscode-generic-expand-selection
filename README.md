@@ -1,5 +1,6 @@
 # Generic Expand Selection
 
+[![VS Code Marketplace](https://vsmarketplacebadges.dev/version/dandehoon.vscode-generic-expand-selection.png)](https://marketplace.visualstudio.com/items?itemName=dandehoon.vscode-generic-expand-selection)
 [![Test](https://github.com/dandehoon/vscode-generic-expand-selection/actions/workflows/test.yml/badge.svg)](https://github.com/dandehoon/vscode-generic-expand-selection/actions/workflows/test.yml)
 
 Smartly expand or shrink your code selection, recover from misclicks or accidental cursor moves.
@@ -8,13 +9,13 @@ Smartly expand or shrink your code selection, recover from misclicks or accident
 
 ### Rules
 
-**Token Expansion**: Expands to word tokens (identifiers, keywords, etc.) with customizable patterns.
-**Quote Expansion**: Expands to content within quotes (`"`, `'`, `` ` ``)
-**Scope Expansion**: Expands to content within open-close pairs (`[]`, `{}`, `()`)
-**Line Expansion**: Expands to full line(s) content
-**Selection History**: Remember previous selections for step-by-step shrinking
+- **Token Expansion**: Expands to character tokens with customizable patterns.
+- **Quote Expansion**: Expands to content within quotes (`"`, `'`, `` ` ``).
+- **Scope Expansion**: Expands to content within open-close pairs (`[]`, `{}`, `()`).
+- **Line Expansion**: Expands to full line(s) content.
+- **Selection History**: Remember previous selections for step-by-step shrinking.
 
-### Examples
+### Example
 
 Text: `const config = { url: 'https://example.com' };`
 
@@ -32,12 +33,16 @@ With cursor on `xamp`, next expansions will be:
 
 ## Usage
 
+### Quick Install
+
+[**Get it on VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=dandehoon.vscode-generic-expand-selection)
+
 ### Commands & Keybindings
 
-| Command                         | Description      | Default Keybinding                              |
-| ------------------------------- | ---------------- | ----------------------------------------------- |
-| `genericExpandSelection.expand` | Expand Selection | `Ctrl+E` (Win/Linux), `Cmd+E` (Mac)             |
-| `genericExpandSelection.shrink` | Shrink Selection | `Ctrl+Shift+E` (Win/Linux), `Cmd+Shift+E` (Mac) |
+| Command                         | Default Keybinding                              | Description      |
+| ------------------------------- | ----------------------------------------------- | ---------------- |
+| `genericExpandSelection.expand` | `Ctrl+E` (Win/Linux), `Cmd+E` (Mac)             | Expand Selection |
+| `genericExpandSelection.shrink` | `Ctrl+Shift+E` (Win/Linux), `Cmd+Shift+E` (Mac) | Shrink Selection |
 
 > [!TIP]
 > Both commands work with single and multiple cursor selections.
