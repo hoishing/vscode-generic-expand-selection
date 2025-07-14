@@ -1,10 +1,13 @@
-import { SelectionCandidate } from '../types';
+import * as vscode from 'vscode';
+import { SelectionCandidate } from '../core';
 import { getCandidate } from './util';
 
 export function findNearestQuotePair(
   text: string,
   startIndex: number,
   endIndex: number,
+  // eslint-disable-next-line no-unused-vars
+  _document?: vscode.TextDocument,
 ): SelectionCandidate | null {
   const selectionText = text.substring(startIndex, endIndex);
   if (!selectionText.includes('\n')) {

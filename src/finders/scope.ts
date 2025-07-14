@@ -1,4 +1,5 @@
-import { SelectionCandidate } from '../types';
+import * as vscode from 'vscode';
+import { SelectionCandidate } from '../core';
 import { getCandidate } from './util';
 
 function getScopeCandidate(
@@ -18,29 +19,43 @@ function getScopeCandidate(
 }
 
 /**
- * Finds all balanced scopes ([], {}, (), <>) and returns the nearest containing candidate
+ * Finds all balanced scopes and returns the nearest containing candidate
  */
 export function findNearestScope(
   text: string,
   startIndex: number,
   endIndex: number,
+  // eslint-disable-next-line no-unused-vars
+  _document?: vscode.TextDocument,
 ): SelectionCandidate | null {
-  const scopePairs = [
-    { open: '[', close: ']' },
-    { open: '{', close: '}' },
-    { open: '(', close: ')' },
-  ];
+  // Define scope mappings directly
+  const openChars = new Map<string, string>([
+    ['[', ']'],
+    ['{', '}'],
+    ['(', ')'],
+  ]);
+
+  const closeChars = new Set(openChars.values());
+
+  // Separate stacks for each scope type
+  const stacks = new Map<string, number[]>(); // close_char -> stack of indices
+  for (const closeChar of closeChars) {
+    stacks.set(closeChar, []);
+  }
 
   let nearestCandidate: SelectionCandidate | null = null;
   let smallestSize = Infinity;
 
-  for (const { open, close } of scopePairs) {
-    const stack: number[] = [];
+  // Single pass through the text
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
 
-    for (let i = 0; i < text.length; i++) {
-      if (text[i] === open) {
-        stack.push(i);
-      } else if (text[i] === close && stack.length > 0) {
+    if (openChars.has(char)) {
+      const closeChar = openChars.get(char)!;
+      stacks.get(closeChar)!.push(i);
+    } else if (closeChars.has(char)) {
+      const stack = stacks.get(char)!;
+      if (stack.length > 0) {
         const start = stack.pop()!;
         const candidate = getScopeCandidate(
           start,

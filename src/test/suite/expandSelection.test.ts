@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { SelectionProvider } from '../../expandSelection';
+import { SelectionProvider } from '../../services';
 import { findNearestQuotePair } from '../../finders/quote';
 import { findToken } from '../../finders/token';
 

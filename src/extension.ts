@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import { SelectionProvider } from './expandSelection';
-import { logger } from './logger';
+import { SelectionProvider } from './services';
+import { getLogger } from './core';
 
 export function activate(context: vscode.ExtensionContext) {
+  const logger = getLogger();
   const provider = new SelectionProvider();
 
   // Register expand selection command
